@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-# Get current phase, week, and day
+# Get current day
 if [[ ! -f ~/.cc-current-day ]]; then
   echo "Error: Day counter file not found. Creating with default value of 1."
   echo "1" > ~/.cc-current-day
@@ -98,24 +98,20 @@ if ! command -v tmux &> /dev/null; then
   exit 1
 fi
 
-# Check if session exists and kill it if it does
-tmux has-session -t coding-challenge 2>/dev/null
-if [ $? -eq 0 ]; then
+# Set editor (default to vim if nvim is not available)
+if command -v nvim &> /dev/null; then
+  EDITOR="nvim"
+else
+  EDITOR="vim"
+fi
+
+# Kill existing session if it exists
+if tmux has-session -t coding-challenge 2>/dev/null; then
   echo "Existing session found. Killing it..."
   tmux kill-session -t coding-challenge
 fi
 
-# Create a new tmux session without attaching
-tmux new-session -d -s coding-challenge -n "code"
-
-# Configure the windows
-tmux split-window -v -p 30 -t coding-challenge
-
-# Send commands to each pane
-tmux send-keys -t coding-challenge:0.0 "cd $PROJECT_DIR && clear" C-m
-tmux send-keys -t coding-challenge:0.1 "cd $PROJECT_DIR && nvim README.md" C-m
-
-# Attach to the session
-echo "Attaching to tmux session..."
-exec tmux attach-session -t coding-challenge
-# Note: Any code after the exec won't run as exec replaces the current process
+# Simplest approach: Just change to the directory and start tmux with the editor
+echo "Starting tmux session..."
+cd $PROJECT_DIR || { echo "Error: Failed to change to project directory"; exit 1; }
+exec tmux new-session -s coding-challenge "$EDITOR README.md"
