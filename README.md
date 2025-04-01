@@ -86,5 +86,5 @@ In addition to this repository's core content, the following resources are avail
 
 ---
 
-Started on: [Date]  
-Estimated completion: [Date]
+Started on: April 1, 2025 
+Estimated completion: April 1, 2027
