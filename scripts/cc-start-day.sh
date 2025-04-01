@@ -58,11 +58,25 @@ cat > $PROJECT_DIR/README.md << EOF
 
 EOF
 
-# Open tmux session
+# Check if session exists and kill it if it does
+tmux has-session -t coding-challenge 2>/dev/null
+if [ $? -eq 0 ]; then
+  echo "Existing session found. Killing it..."
+  tmux kill-session -t coding-challenge
+fi
+
+# Create a new tmux session without attaching
 tmux new-session -d -s coding-challenge -n "code"
+
+# Configure the windows
 tmux split-window -v -p 30 -t coding-challenge
+
+# Send commands to each pane
 tmux send-keys -t coding-challenge:0.0 "cd $PROJECT_DIR && clear" C-m
 tmux send-keys -t coding-challenge:0.1 "cd $PROJECT_DIR && nvim README.md" C-m
-tmux attach-session -t coding-challenge
+
+# Attach to the session
+echo "Attaching to tmux session..."
+exec tmux attach-session -t coding-challenge
 
 echo "Session started for Day $CURRENT_DAY in $PROJECT_DIR"
