@@ -562,7 +562,7 @@ Remember to adapt this plan to your personal workflow and adjust based on engage
    - Build modular components that can evolve with your skills
 
 4. **Technical Growth Integration**
-   - Phase 1: Use Ruby to enhance automation scripts
+   - Phase A1: Use Ruby to enhance automation scripts
    - Phase 2: Apply Python data analysis to your progress metrics
    - Phase 3: Improve website with JavaScript visualizations
    - Phase 4: Create full-stack dashboards for tracking progress
