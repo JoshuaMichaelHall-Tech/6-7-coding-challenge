@@ -956,7 +956,7 @@ class CodingChallengeInstaller
 
       # Check if day entry already exists
       log_content = File.read(LOG_FILE)
-      day_entry_pattern = /^## Day #{LOG_DAY}$/
+      day_entry_pattern = /^## Day \#{LOG_DAY}$/
 
       if log_content.match(day_entry_pattern)
         puts "Warning: An entry for Day \#{LOG_DAY} already exists in the log file."
@@ -1079,8 +1079,8 @@ class CodingChallengeInstaller
 
       # Helper method to extract section from README
       def extract_section(content, section_start, section_end)
-        pattern_start = "## #{section_start}"
-        pattern_end = section_end ? "## #{section_end}" : nil
+        pattern_start = "## \#{section_start}"
+        pattern_end = section_end ? "## \#{section_end}" : nil
         
         start_index = content.index(pattern_start)
         return "" unless start_index
