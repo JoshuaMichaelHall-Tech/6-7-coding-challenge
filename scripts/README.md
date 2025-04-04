@@ -1,18 +1,24 @@
 # 6/7 Coding Challenge Scripts
 
+**⚠️ DISCLAIMER: This is a work in progress. I am still working out bugs and refining the configuration. Use at your own risk and please report any issues you encounter.**
+
 This directory contains the automation scripts that power the 6/7 Coding Challenge. These scripts help maintain consistency, track progress, and simplify the daily workflow.
 
 ## Script Overview
 
 | Script | Description |
 |--------|-------------|
-| `cc-setup.sh` | One-time setup script for the challenge environment |
+| `cc-setup.sh` | Unified script for installation, updates, and uninstallation |
 | `cc-start-day.sh` | Initializes the environment for a new challenge day |
 | `cc-log-progress.sh` | Records the day's progress in the weekly log file |
 | `cc-push-updates.sh` | Commits and pushes changes, increments the day counter |
 | `cc-status.sh` | Displays the current challenge status and progress |
+| `cc-update.sh` | Updates scripts to the latest version |
+| `cc-uninstall.sh` | Removes scripts and configuration |
 
 ## Installation
+
+### Basic Installation
 
 1. Clone the repository:
    ```zsh
@@ -25,17 +31,35 @@ This directory contains the automation scripts that power the 6/7 Coding Challen
    zsh scripts/cc-setup.sh
    ```
 
-   This will:
-   - Create necessary directories in `~/projects/6-7-coding-challenge/`
-   - Install scripts to `~/bin/`
-   - Initialize the day counter
-   - Add aliases to your `.zshrc`
-   - Set up git repository with .gitignore
-
 3. Source your `.zshrc` or restart your terminal:
    ```zsh
    source ~/.zshrc
    ```
+
+### Installation Options
+
+The setup script now intelligently detects existing installations and offers appropriate actions:
+
+```zsh
+# Standard installation (detects existing installation)
+zsh scripts/cc-setup.sh
+
+# Force reinstallation
+zsh scripts/cc-setup.sh --install
+
+# Update an existing installation 
+zsh scripts/cc-setup.sh --update
+# or use the alias after installation:
+ccupdate
+
+# Uninstall
+zsh scripts/cc-setup.sh --uninstall
+# or use the alias after installation:
+ccuninstall
+
+# Show help
+zsh scripts/cc-setup.sh --help
+```
 
 ## Prerequisites
 
@@ -43,11 +67,13 @@ The scripts require these tools to be installed:
 
 - **zsh**: As your shell (`echo $SHELL`)
 - **git**: For version control (`git --version`)
-- **tmux**: For terminal session management (`tmux -V`)
 
 Optional but recommended:
-- **neovim**: For editing files (`nvim --version`)
+- **tmux**: For terminal session management (`tmux -V`)
+- **neovim** or **vim**: For editing files
 - **Ruby**: For Phase 1 projects (`ruby -v`)
+
+The setup script will check for these dependencies and provide appropriate warnings if they're missing.
 
 ## Daily Workflow
 
@@ -72,30 +98,70 @@ Optional but recommended:
    ccstatus
    ```
 
+## New Feature: Retroactive Logging
+
+The enhanced `cclog` command now supports logging progress for previous days:
+
+```zsh
+# Log the current day (normal usage)
+cclog
+
+# Log a specific previous day
+cclog 5  # Logs day 5 specifically
+```
+
+This is useful if you forget to log on a particular day.
+
+## New Feature: Safe Updates
+
+You can update your scripts to the latest version at any time:
+
+```zsh
+ccupdate
+```
+
+This will:
+- Backup existing scripts
+- Install the latest versions
+- Preserve your day counter and progress
+- Update configuration files
+
+## New Feature: Clean Uninstallation
+
+You can completely remove the 6/7 Coding Challenge installation:
+
+```zsh
+ccuninstall
+```
+
+This will:
+- Remove all scripts from ~/bin
+- Clean up aliases from .zshrc
+- Optionally remove the day counter
+- Optionally remove all project files and logs
+
 ## Script Details
 
 ### cc-setup.sh
 
-**Purpose**: One-time setup for the challenge environment
+**Purpose**: Unified script for installation, updates, and uninstallation
 
 **Features**:
+- Intelligently detects existing installations
+- Offers appropriate actions based on current state
 - Creates directory structure for all phases
 - Installs scripts to `~/bin/`
-- Initializes day counter
-- Sets up git repository
-- Creates default `.gitignore`
-- Adds aliases to `.zshrc`
+- Initializes or preserves day counter
+- Sets up git repository if needed
+- Creates or updates `.gitignore`
+- Adds or updates aliases in `.zshrc`
+- Provides comprehensive error handling
+- Works across macOS, Linux, and WSL
 
 **Usage**:
 ```zsh
-zsh scripts/cc-setup.sh
+zsh scripts/cc-setup.sh [--install|--update|--uninstall|--help]
 ```
-
-**Error Handling**:
-- Checks for required tools (git, tmux)
-- Verifies successful directory creation
-- Validates script permissions
-- Reports specific errors for troubleshooting
 
 ### cc-start-day.sh
 
@@ -107,22 +173,13 @@ zsh scripts/cc-setup.sh
 - Creates appropriate directory structure
 - Initializes a README template for the day
 - Opens a tmux session with the right directory and files
+- Falls back gracefully if tmux is not installed
 - Platform-compatible for macOS and Linux
 
 **Usage**:
 ```zsh
 ccstart
 ```
-
-**Error Handling**:
-- Verifies day counter exists
-- Checks if tmux is installed
-- Validates directory creation
-- Handles existing tmux sessions
-
-**tmux Session Layout**:
-- Top pane: Terminal in the day's project directory
-- Bottom pane: Editor with README.md open
 
 ### cc-log-progress.sh
 
@@ -134,17 +191,18 @@ ccstart
 - Maintains consistent log formatting
 - Creates new log files as needed
 - Supports all phases of the challenge
+- **NEW**: Supports retroactive logging for missed days
+- Inserts entries in correct chronological order
+- Handles duplicate entries appropriately
 
 **Usage**:
 ```zsh
+# Log current day (standard usage)
 cclog
-```
 
-**Error Handling**:
-- Validates existence of README.md
-- Checks write permissions for log file
-- Reports detailed errors for each operation
-- Confirms successful logging
+# Log a specific previous day
+cclog <day_number>
+```
 
 ### cc-push-updates.sh
 
@@ -163,17 +221,6 @@ cclog
 **Usage**:
 ```zsh
 ccpush
-```
-
-**Error Handling**:
-- Checks if there are changes to commit
-- Validates git repository status
-- Confirms remote repository exists
-- Verifies day counter update
-
-**Commit Message Format**:
-```
-Day X: YYYY-MM-DD - Primary goal description
 ```
 
 ### cc-status.sh
@@ -196,83 +243,36 @@ Day X: YYYY-MM-DD - Primary goal description
 ccstatus
 ```
 
-**Output Example**:
-```
-╔═══════════════════════════════════════════════════╗
-║            6/7 CODING CHALLENGE STATUS             ║
-╠═══════════════════════════════════════════════════╣
-║ Current Day: 42/500                               ║
-║ Phase: 1 of 5 - Ruby Backend                      ║
-║ Week: 7 overall (Week 7 in Phase 1)               ║
-║ Day of Week: 6/6                                  ║
-║ Progress: 8% complete                             ║
-║ Days Elapsed: 41                                  ║
-║ Schedule Status: On schedule                      ║
-║ Days Remaining: 459                               ║
-║ Estimated Completion: 2026-07-04                  ║
-║ Current Streak: 6 day(s)                          ║
-╠═══════════════════════════════════════════════════╣
-║ Active Branch: main                               ║
-║ Last Commit: a1b2c3d - Day 41: 2025-05-12        ║
-║ Commit Date: 2025-05-12                           ║
-╚═══════════════════════════════════════════════════╝
-```
+### cc-update.sh (New)
 
-## Custom Modifications
+**Purpose**: Update scripts to the latest version
 
-You can modify these scripts to better suit your workflow. Here are common customization points:
+**Features**:
+- Runs the setup script in update mode
+- Preserves day counter and progress
+- Backs up existing scripts
+- Updates configuration files
+- Provides clear status messages
 
-### README Template
-
-To customize the README template, edit `cc-start-day.sh`:
-
+**Usage**:
 ```zsh
-# Find this section in cc-start-day.sh
-cat > $PROJECT_DIR/README.md << EOF
-# Day $CURRENT_DAY - Phase $PHASE (Week $WEEK_FORMATTED)
-
-## Today's Focus
-...
-EOF
+ccupdate
 ```
 
-### tmux Layout
+### cc-uninstall.sh (New)
 
-To change the tmux window layout, modify this section in `cc-start-day.sh`:
+**Purpose**: Remove scripts and configuration
 
+**Features**:
+- Removes all scripts from ~/bin
+- Cleans up aliases from .zshrc
+- Optionally removes the day counter
+- Optionally removes all project files and logs
+- Provides clear status messages
+
+**Usage**:
 ```zsh
-# Configure the windows
-tmux split-window -v -p 30 -t coding-challenge
-
-# For horizontal split instead:
-# tmux split-window -h -p 50 -t coding-challenge
-
-# For additional panes:
-# tmux split-window -v -p 30 -t coding-challenge:0.1
-```
-
-### Status Display
-
-To adjust the status display, edit `cc-status.sh`:
-
-```zsh
-# Modify the status display format
-printf "${BOLD}║${RESET} ${GREEN}Current Day:${RESET} %-37s ${BOLD}║${RESET}\n" "$CURRENT_DAY/500"
-
-# Add additional metrics
-printf "${BOLD}║${RESET} ${CYAN}Custom Metric:${RESET} %-34s ${BOLD}║${RESET}\n" "Your value here"
-```
-
-### Day Counter
-
-To reset or adjust your day counter:
-
-```zsh
-# Reset to day 1
-echo "1" > ~/.cc-current-day
-
-# Jump to a specific day
-echo "42" > ~/.cc-current-day
+ccuninstall
 ```
 
 ## Platform Compatibility
@@ -285,15 +285,13 @@ All scripts work natively on macOS with no additional configuration.
 
 ### Linux
 
-The scripts use platform detection to use the appropriate date commands on Linux:
+The scripts use platform detection to use the appropriate commands on Linux:
 
 ```zsh
 if [[ "$(uname)" == "Darwin" ]]; then
-  # macOS date commands
-  COMPLETION_DATE=$(date -v+${DAYS_REMAINING}d +"%Y-%m-%d")
+  # macOS specific commands
 else
-  # Linux date commands
-  COMPLETION_DATE=$(date -d "+${DAYS_REMAINING} days" +"%Y-%m-%d")
+  # Linux specific commands
 fi
 ```
 
@@ -303,52 +301,30 @@ The scripts work in Windows Subsystem for Linux with no modifications needed.
 
 ## Troubleshooting
 
-If you encounter issues:
+The enhanced error handling will provide clear messages for most issues. Common issues and solutions:
 
-### Script Not Found
+### Installation Issues
 
 ```zsh
-# Check if scripts are in ~/bin
-ls -la ~/bin
-
-# Check if ~/bin is in your PATH
-echo $PATH | grep "$HOME/bin"
-
-# Add to PATH if needed
-echo 'export PATH="$HOME/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
+# Retry installation with verbose output
+zsh -x scripts/cc-setup.sh
 ```
 
-### Permission Denied
+### Script Issues
 
 ```zsh
-# Make scripts executable
-chmod +x ~/bin/cc-*.sh
+# Update to the latest version
+ccupdate
 ```
 
-### Day Counter Issues
+### Configuration Issues
 
 ```zsh
-# Check day counter value
+# Check configuration
+cat ~/.cc-config
+
+# Check day counter
 cat ~/.cc-current-day
-
-# Reset if corrupted
-echo "1" > ~/.cc-current-day
-```
-
-### tmux Errors
-
-```zsh
-# Check if tmux is installed
-which tmux
-
-# Install if needed
-# macOS: brew install tmux
-# Ubuntu/Debian: sudo apt install tmux
-# Fedora/RHEL: sudo dnf install tmux
-
-# Kill stuck sessions
-tmux kill-session -t coding-challenge
 ```
 
 ### Directory Structure Issues
@@ -356,75 +332,15 @@ tmux kill-session -t coding-challenge
 ```zsh
 # Verify directory structure
 ls -la ~/projects/6-7-coding-challenge
-
-# Create if missing
-mkdir -p ~/projects/6-7-coding-challenge/{logs,phase1_ruby,phase2_python,phase3_javascript,phase4_fullstack,phase5_ml_finance}
-```
-
-## Advanced Usage
-
-### Adding Custom Scripts
-
-You can create additional scripts to enhance your workflow:
-
-```zsh
-# Example: Weekly summary generator
-cat > ~/bin/cc-weekly-summary.sh << 'EOF'
-#!/bin/zsh
-
-# Get current week
-CURRENT_DAY=$(cat ~/.cc-current-day 2>/dev/null || echo 1)
-WEEK_OVERALL=$(( ($CURRENT_DAY-1) / 6 + 1 ))
-
-# Generate summary
-echo "Generating summary for Week $WEEK_OVERALL..."
-# Add your summary generation code here
-
-EOF
-
-chmod +x ~/bin/cc-weekly-summary.sh
-```
-
-### Debugging Scripts
-
-To troubleshoot issues, run scripts in debug mode:
-
-```zsh
-zsh -x ~/bin/cc-start-day.sh
-```
-
-This will show each command as it executes, helping identify issues.
-
-### Backup and Restore
-
-To backup your challenge progress:
-
-```zsh
-# Backup day counter
-cp ~/.cc-current-day ~/cc-day-backup
-
-# Backup entire repository
-cd ~/projects/6-7-coding-challenge
-git bundle create ~/challenge-backup.bundle --all
-```
-
-To restore:
-
-```zsh
-# Restore day counter
-cp ~/cc-day-backup ~/.cc-current-day
-
-# Restore repository
-git clone ~/challenge-backup.bundle ~/projects/6-7-coding-challenge-restored
 ```
 
 ## Version Information
 
-All scripts have been updated with:
-- Improved error handling
-- Platform compatibility
-- Enhanced feedback
-- Better performance
-- Consistent formatting
+The scripts are now versioned, with the current version stored in the config file:
+
+```zsh
+# Check current version
+grep "version=" ~/.cc-config
+```
 
 Last updated: April 2025
