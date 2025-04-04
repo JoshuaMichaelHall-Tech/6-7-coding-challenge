@@ -1,6 +1,6 @@
 # 6/7 Coding Challenge
 
-**⚠️ DISCLAIMER: This is a work in progress. I am still working out bugs and refining the configuration. Use at your own risk and please report any issues you encounter.**
+**⚠️ DISCLAIMER: This is a work in progress. The implementation has been upgraded to use Ruby for improved reliability and cross-platform compatibility.**
 
 ## Overview
 
@@ -13,8 +13,13 @@ The 6/7 Coding Challenge is a personal commitment to code for 500 days, six days
 git clone https://github.com/joshuamichaelhall-tech/6-7-coding-challenge.git
 cd 6-7-coding-challenge
 
-# Run the setup script
-zsh scripts/cc-setup.sh
+# Install the Ruby-based setup script
+mkdir -p ~/bin
+cp scripts/cc-installer.rb ~/bin/
+chmod +x ~/bin/cc-installer.rb
+
+# Run the installer
+ruby ~/bin/cc-installer.rb
 
 # Source your .zshrc or restart your terminal
 source ~/.zshrc
@@ -70,35 +75,52 @@ After installation, these commands will be available:
 
 The scripts require these tools to be installed:
 
+- **Ruby**: For the installer and script execution
 - **zsh**: As your shell
 - **git**: For version control
 
 Optional but recommended:
 - **tmux**: For terminal session management (falls back gracefully if not available)
 - **neovim** or **vim**: For editing files (uses your default editor if neither is available) 
-- **Ruby**: For Phase 1 projects
 
 ## Installation Options
 
-The setup script now offers multiple modes:
+The Ruby installer script offers multiple modes:
 
 ```zsh
 # Standard installation
-zsh scripts/cc-setup.sh
+ruby ~/bin/cc-installer.rb
 
 # Force reinstallation
-zsh scripts/cc-setup.sh --install
+ruby ~/bin/cc-installer.rb --install
 
 # Update an existing installation 
-zsh scripts/cc-setup.sh --update
+ruby ~/bin/cc-installer.rb --update
 # or use the alias after installation:
 ccupdate
 
 # Uninstall
-zsh scripts/cc-setup.sh --uninstall
+ruby ~/bin/cc-installer.rb --uninstall
 # or use the alias after installation:
 ccuninstall
+
+# Verbose output for troubleshooting
+ruby ~/bin/cc-installer.rb --verbose
 ```
+
+## New Feature: Retroactive Logging
+
+You can now log entries for previous days:
+
+```zsh
+# Log the current day (normal usage)
+cclog
+
+# Log a specific previous day
+cclog 5  # Logs day 5 specifically
+```
+
+This is useful if you forget to log on a particular day.
 
 ## For More Information
 
@@ -107,6 +129,7 @@ See the following documentation files for more details:
 - [Getting Started Guide](getting-started.md): Detailed instructions for beginners
 - [Scripts Documentation](scripts/README.md): Complete documentation of all scripts
 - [About the Challenge](ABOUT.md): Philosophy and motivation behind the challenge
+- [Implementation Guide](implementation-guide.md): Detailed guide for the Ruby installer
 
 ## License
 

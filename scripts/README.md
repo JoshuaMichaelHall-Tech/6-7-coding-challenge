@@ -1,6 +1,6 @@
 # 6/7 Coding Challenge Scripts
 
-**⚠️ DISCLAIMER: This is a work in progress. I am still working out bugs and refining the configuration. Use at your own risk and please report any issues you encounter.**
+**⚠️ NOTE: The implementation has been upgraded to use Ruby for improved reliability and cross-platform compatibility.**
 
 This directory contains the automation scripts that power the 6/7 Coding Challenge. These scripts help maintain consistency, track progress, and simplify the daily workflow.
 
@@ -8,13 +8,13 @@ This directory contains the automation scripts that power the 6/7 Coding Challen
 
 | Script | Description |
 |--------|-------------|
-| `cc-setup.sh` | Unified script for installation, updates, and uninstallation |
-| `cc-start-day.sh` | Initializes the environment for a new challenge day |
-| `cc-log-progress.sh` | Records the day's progress in the weekly log file |
-| `cc-push-updates.sh` | Commits and pushes changes, increments the day counter |
-| `cc-status.sh` | Displays the current challenge status and progress |
-| `cc-update.sh` | Updates scripts to the latest version |
-| `cc-uninstall.sh` | Removes scripts and configuration |
+| `cc-installer.rb` | Main Ruby installer for installation, updates, and uninstallation |
+| `cc-start-day.rb` | Initializes the environment for a new challenge day |
+| `cc-log-progress.rb` | Records the day's progress in the weekly log file |
+| `cc-push-updates.rb` | Commits and pushes changes, increments the day counter |
+| `cc-status.rb` | Displays the current challenge status and progress |
+| `cc-update.rb` | Updates scripts to the latest version |
+| `cc-uninstall.rb` | Removes scripts and configuration |
 
 ## Installation
 
@@ -26,54 +26,61 @@ This directory contains the automation scripts that power the 6/7 Coding Challen
    cd 6-7-coding-challenge
    ```
 
-2. Run the setup script:
+2. Install the Ruby setup script:
    ```zsh
-   zsh scripts/cc-setup.sh
+   mkdir -p ~/bin
+   cp scripts/cc-installer.rb ~/bin/
+   chmod +x ~/bin/cc-installer.rb
    ```
 
-3. Source your `.zshrc` or restart your terminal:
+3. Run the installer:
+   ```zsh
+   ruby ~/bin/cc-installer.rb
+   ```
+
+4. Source your `.zshrc` or restart your terminal:
    ```zsh
    source ~/.zshrc
    ```
 
 ### Installation Options
 
-The setup script now intelligently detects existing installations and offers appropriate actions:
+The Ruby installer script offers multiple modes:
 
 ```zsh
 # Standard installation (detects existing installation)
-zsh scripts/cc-setup.sh
+ruby ~/bin/cc-installer.rb
 
 # Force reinstallation
-zsh scripts/cc-setup.sh --install
+ruby ~/bin/cc-installer.rb --install
 
 # Update an existing installation 
-zsh scripts/cc-setup.sh --update
+ruby ~/bin/cc-installer.rb --update
 # or use the alias after installation:
 ccupdate
 
 # Uninstall
-zsh scripts/cc-setup.sh --uninstall
+ruby ~/bin/cc-installer.rb --uninstall
 # or use the alias after installation:
 ccuninstall
 
-# Show help
-zsh scripts/cc-setup.sh --help
+# Verbose output for troubleshooting
+ruby ~/bin/cc-installer.rb --verbose
 ```
 
 ## Prerequisites
 
 The scripts require these tools to be installed:
 
+- **Ruby**: For the installer and script execution (`ruby -v`)
 - **zsh**: As your shell (`echo $SHELL`)
 - **git**: For version control (`git --version`)
 
 Optional but recommended:
 - **tmux**: For terminal session management (`tmux -V`)
 - **neovim** or **vim**: For editing files
-- **Ruby**: For Phase 1 projects (`ruby -v`)
 
-The setup script will check for these dependencies and provide appropriate warnings if they're missing.
+The installer script will check for these dependencies and provide appropriate warnings if they're missing.
 
 ## Daily Workflow
 
@@ -112,39 +119,11 @@ cclog 5  # Logs day 5 specifically
 
 This is useful if you forget to log on a particular day.
 
-## New Feature: Safe Updates
-
-You can update your scripts to the latest version at any time:
-
-```zsh
-ccupdate
-```
-
-This will:
-- Backup existing scripts
-- Install the latest versions
-- Preserve your day counter and progress
-- Update configuration files
-
-## New Feature: Clean Uninstallation
-
-You can completely remove the 6/7 Coding Challenge installation:
-
-```zsh
-ccuninstall
-```
-
-This will:
-- Remove all scripts from ~/bin
-- Clean up aliases from .zshrc
-- Optionally remove the day counter
-- Optionally remove all project files and logs
-
 ## Script Details
 
-### cc-setup.sh
+### cc-installer.rb
 
-**Purpose**: Unified script for installation, updates, and uninstallation
+**Purpose**: Unified Ruby installer for installation, updates, and uninstallation
 
 **Features**:
 - Intelligently detects existing installations
@@ -160,10 +139,10 @@ This will:
 
 **Usage**:
 ```zsh
-zsh scripts/cc-setup.sh [--install|--update|--uninstall|--help]
+ruby ~/bin/cc-installer.rb [--install|--update|--uninstall|--verbose|--force|--help]
 ```
 
-### cc-start-day.sh
+### cc-start-day.rb
 
 **Purpose**: Initialize the environment for a new challenge day
 
@@ -181,7 +160,7 @@ zsh scripts/cc-setup.sh [--install|--update|--uninstall|--help]
 ccstart
 ```
 
-### cc-log-progress.sh
+### cc-log-progress.rb
 
 **Purpose**: Record daily progress in weekly log files
 
@@ -204,7 +183,7 @@ cclog
 cclog <day_number>
 ```
 
-### cc-push-updates.sh
+### cc-push-updates.rb
 
 **Purpose**: Commit changes and increment the day counter
 
@@ -223,7 +202,7 @@ cclog <day_number>
 ccpush
 ```
 
-### cc-status.sh
+### cc-status.rb
 
 **Purpose**: Display challenge progress and statistics
 
@@ -243,38 +222,6 @@ ccpush
 ccstatus
 ```
 
-### cc-update.sh (New)
-
-**Purpose**: Update scripts to the latest version
-
-**Features**:
-- Runs the setup script in update mode
-- Preserves day counter and progress
-- Backs up existing scripts
-- Updates configuration files
-- Provides clear status messages
-
-**Usage**:
-```zsh
-ccupdate
-```
-
-### cc-uninstall.sh (New)
-
-**Purpose**: Remove scripts and configuration
-
-**Features**:
-- Removes all scripts from ~/bin
-- Cleans up aliases from .zshrc
-- Optionally removes the day counter
-- Optionally removes all project files and logs
-- Provides clear status messages
-
-**Usage**:
-```zsh
-ccuninstall
-```
-
 ## Platform Compatibility
 
 The scripts have been improved to work across different platforms:
@@ -285,15 +232,7 @@ All scripts work natively on macOS with no additional configuration.
 
 ### Linux
 
-The scripts use platform detection to use the appropriate commands on Linux:
-
-```zsh
-if [[ "$(uname)" == "Darwin" ]]; then
-  # macOS specific commands
-else
-  # Linux specific commands
-fi
-```
+The scripts use platform detection to use the appropriate commands on Linux systems.
 
 ### Windows (WSL)
 
@@ -307,7 +246,7 @@ The enhanced error handling will provide clear messages for most issues. Common 
 
 ```zsh
 # Retry installation with verbose output
-zsh -x scripts/cc-setup.sh
+ruby ~/bin/cc-installer.rb --verbose
 ```
 
 ### Script Issues
@@ -332,15 +271,6 @@ cat ~/.cc-current-day
 ```zsh
 # Verify directory structure
 ls -la ~/projects/6-7-coding-challenge
-```
-
-## Version Information
-
-The scripts are now versioned, with the current version stored in the config file:
-
-```zsh
-# Check current version
-grep "version=" ~/.cc-config
 ```
 
 Last updated: April 2025
