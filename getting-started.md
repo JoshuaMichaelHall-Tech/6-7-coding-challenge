@@ -9,8 +9,13 @@ Welcome to the 6/7 Coding Challenge! This guide will help you set up your enviro
 git clone https://github.com/joshuamichaelhall-tech/6-7-coding-challenge.git
 cd 6-7-coding-challenge
 
-# Run the setup script
-zsh scripts/cc-setup.sh
+# Install the Ruby setup script
+mkdir -p ~/bin
+cp scripts/cc-installer.rb ~/bin/
+chmod +x ~/bin/cc-installer.rb
+
+# Run the installer
+ruby ~/bin/cc-installer.rb
 
 # Source your .zshrc or restart your terminal
 source ~/.zshrc
@@ -33,11 +38,11 @@ The 6/7 Coding Challenge is a personal commitment to code for 500 days, six days
 
 Before beginning the challenge, ensure you have:
 
+- **Ruby**: Required for the installer and scripts (`ruby -v`)
 - **Git**: For version control (`git --version`)
-- **tmux**: For terminal session management (`tmux -V`)
 - **zsh**: As your shell (`echo $SHELL`)
-- **Neovim**: Recommended editor (`nvim --version`)
-- **Ruby**: For Phase 1 (`ruby -v`)
+- **tmux**: For terminal session management (`tmux -V`) - recommended but optional
+- **Neovim** or **vim**: Recommended editors (`nvim --version` or `vim --version`)
 
 ## Detailed Setup Guide
 
@@ -48,26 +53,35 @@ git clone https://github.com/joshuamichaelhall-tech/6-7-coding-challenge.git
 cd 6-7-coding-challenge
 ```
 
-### 2. Run the Setup Script
+### 2. Install the Ruby Installer Script
 
-The setup script will:
+```zsh
+mkdir -p ~/bin
+cp scripts/cc-installer.rb ~/bin/
+chmod +x ~/bin/cc-installer.rb
+```
+
+### 3. Run the Installer
+
+```zsh
+ruby ~/bin/cc-installer.rb
+```
+
+The installer will:
+- Check for prerequisites
 - Create necessary directories
 - Install challenge scripts in `~/bin`
 - Initialize the day counter
 - Set up git repository with .gitignore
 - Add aliases to your .zshrc
 
-```zsh
-zsh scripts/cc-setup.sh
-```
-
-### 3. Source Your .zshrc or Restart Your Terminal
+### 4. Source Your .zshrc or Restart Your Terminal
 
 ```zsh
 source ~/.zshrc
 ```
 
-### 4. Start Your First Day
+### 5. Start Your First Day
 
 ```zsh
 ccstart
@@ -77,7 +91,7 @@ This will open a tmux session with the appropriate files for your first day.
 
 ## Core Commands
 
-These commands will be available after running the setup script:
+These commands will be available after running the installer:
 
 | Command    | Description                                           |
 |------------|-------------------------------------------------------|
@@ -85,6 +99,8 @@ These commands will be available after running the setup script:
 | `cclog`    | Record your progress in the weekly log                |
 | `ccpush`   | Commit changes and increment the day counter          |
 | `ccstatus` | Show your overall challenge progress                  |
+| `ccupdate` | Update scripts to the latest version                  |
+| `ccuninstall` | Remove scripts and configuration                   |
 
 ## Daily Workflow
 
@@ -112,6 +128,17 @@ These commands will be available after running the setup script:
    - Calculates your progress percentage
    - Estimates your completion date
    - Shows git streak information
+
+## New Feature: Retroactive Logging
+
+If you forget to log your progress on a particular day, you can now log it retroactively:
+
+```zsh
+# Log a specific previous day
+cclog 5  # Logs day 5 specifically
+```
+
+This ensures your weekly logs remain complete even if you miss logging on a specific day.
 
 ## Sample README and Log Format
 
@@ -181,52 +208,55 @@ These commands will be available after running the setup script:
 │       └── day1/                 # Daily project directories
 ├── scripts/                      # Challenge automation scripts
 │   ├── README.md                 # Scripts documentation
-│   ├── cc-setup.sh               # Setup script
-│   ├── cc-start-day.sh           # Day starter script
-│   ├── cc-log-progress.sh        # Progress logger
-│   ├── cc-push-updates.sh        # Git update script
-│   └── cc-status.sh              # Progress tracker
+│   ├── cc-installer.rb           # Main Ruby installer
+│   └── [other original scripts]  # Original shell scripts
 └── .gitignore                    # Git ignore file
 ```
 
 ## Customization Options
 
-You can customize various aspects of the challenge to better suit your needs:
+### Installation Options
 
-### Project Structure Configuration
+The Ruby installer supports these command-line options:
 
-To modify the phase structure, edit these variables in the scripts:
-- `TOTAL_DAYS`: Change the total number of challenge days (default: 500)
-- `START_DATE`: Modify the start date (default: 2025-04-01)
+```zsh
+# Standard installation
+ruby ~/bin/cc-installer.rb
+
+# Force reinstallation
+ruby ~/bin/cc-installer.rb --install
+
+# Update an existing installation 
+ruby ~/bin/cc-installer.rb --update
+
+# Uninstall
+ruby ~/bin/cc-installer.rb --uninstall
+
+# Verbose output for troubleshooting
+ruby ~/bin/cc-installer.rb --verbose
+```
 
 ### Template Customization
 
-To customize the README template, edit the template in `cc-start-day.sh`:
-```zsh
-# Open cc-start-day.sh
-nvim ~/bin/cc-start-day.sh
+To customize the README template, edit the template in the installer:
 
-# Find the section with cat > $PROJECT_DIR/README.md
+```zsh
+# Open the installer script
+vim ~/bin/cc-installer.rb
+
+# Find the section with README_PATH template
 # Modify the template to your liking
 ```
 
 ### Adding Additional Scripts
 
-Create custom scripts in `~/bin` with the prefix `cc-` for consistency:
+To extend the functionality, you can create custom Ruby scripts in `~/bin` with the prefix `cc-`:
+
 ```zsh
 # Example: Create a weekly summary generator
-nvim ~/bin/cc-weekly-summary.sh
-chmod +x ~/bin/cc-weekly-summary.sh
+vim ~/bin/cc-weekly-summary.rb
+chmod +x ~/bin/cc-weekly-summary.rb
 ```
-
-### Status Display Options
-
-The `ccstatus` command supports colorized output and includes:
-- Current day and phase information
-- Progress percentage
-- Schedule tracking (ahead/behind)
-- GitHub streak information
-- Repository status
 
 ## Troubleshooting
 
@@ -239,7 +269,7 @@ The `ccstatus` command supports colorized output and includes:
 ls -la ~/bin
 
 # Fix permissions
-chmod +x ~/bin/cc-*.sh
+chmod +x ~/bin/cc-*.rb
 ```
 
 #### Day Counter Not Found
@@ -292,15 +322,11 @@ source ~/.zshrc
 
 ### Logs and Diagnostics
 
-All scripts include improved error reporting. If you encounter issues:
+For detailed output when troubleshooting:
 
-1. Check the output messages for specific errors
-2. Verify file and directory permissions
-3. Confirm that all prerequisites are installed
-4. Try running the scripts with debug mode:
-   ```zsh
-   zsh -x ~/bin/cc-start-day.sh
-   ```
+```zsh
+ruby ~/bin/cc-installer.rb --verbose
+```
 
 ## Online Integration
 
@@ -315,10 +341,10 @@ See `docs/website-social-guide.md` for a comprehensive plan.
 
 ## Platform Compatibility
 
-The challenge scripts have been improved to work on both macOS and Linux:
+The Ruby-based scripts work on multiple platforms:
 
-- **macOS**: Fully supported with native date handling
-- **Linux**: Compatible with GNU date command
+- **macOS**: Fully supported
+- **Linux**: Fully supported
 - **Windows**: Works with WSL (Windows Subsystem for Linux)
 
 ## Project Templates
@@ -349,7 +375,7 @@ Phase-specific templates for other phases are coming soon.
 
 ## Progress Visualization
 
-The `ccstatus` command now includes enhanced visualization:
+The `ccstatus` command includes enhanced visualization:
 - Colorized output for better readability
 - Schedule tracking (ahead/behind)
 - Current streak tracking
@@ -374,5 +400,6 @@ As John C. Maxwell said: "Master the basics. Then practice them every day withou
 - Check the `ABOUT.md` file for a deeper understanding of the challenge philosophy
 - Explore the `docs/` directory for more resources
 - Review this guide's troubleshooting section for common issues
+- Check the implementation guide for detailed information about the Ruby installer
 
 Happy coding, and enjoy your 500-day journey to mastery!
