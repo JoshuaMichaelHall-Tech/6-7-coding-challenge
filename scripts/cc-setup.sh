@@ -1,38 +1,284 @@
 #!/bin/zsh
 
-# 6/7 Coding Challenge Setup Script
-# This script sets up the environment for the 6/7 coding challenge
+# 6/7 Coding Challenge Setup/Update/Uninstall Script
+# This script provides a complete solution for managing the 6/7 Coding Challenge environment
 
-echo "Setting up your 6/7 Coding Challenge environment..."
+# Constants
+SCRIPT_VERSION="2.0.0"
+BASE_DIR=~/projects/6-7-coding-challenge
+BIN_DIR=~/bin
+CONFIG_FILE=~/.cc-config
+DAY_COUNTER=~/.cc-current-day
+ALIASES_MARKER="# 6/7 Coding Challenge aliases"
+ALIASES_BLOCK="
+$ALIASES_MARKER
+alias ccstart=\"$BIN_DIR/cc-start-day.sh\"
+alias cclog=\"$BIN_DIR/cc-log-progress.sh\"
+alias ccpush=\"$BIN_DIR/cc-push-updates.sh\"
+alias ccstatus=\"$BIN_DIR/cc-status.sh\"
+alias ccupdate=\"$BIN_DIR/cc-update.sh\"
+alias ccuninstall=\"$BIN_DIR/cc-uninstall.sh\"
+"
 
-# Check for required tools
-if ! command -v git &> /dev/null; then
-  echo "Error: git not found. Please install git and try again."
-  exit 1
+# Colors and formatting
+if command -v tput &> /dev/null; then
+  BOLD=$(tput bold)
+  GREEN=$(tput setaf 2)
+  YELLOW=$(tput setaf 3)
+  RED=$(tput setaf 1)
+  BLUE=$(tput setaf 4)
+  RESET=$(tput sgr0)
+else
+  BOLD=""
+  GREEN=""
+  YELLOW=""
+  RED=""
+  BLUE=""
+  RESET=""
 fi
 
-if ! command -v tmux &> /dev/null; then
-  echo "Warning: tmux not found. Please install tmux for best experience."
-  echo "For macOS: brew install tmux"
-  echo "For Ubuntu/Debian: sudo apt install tmux"
-  echo ""
-  read -p "Continue setup without tmux? (y/n): " continue_setup
-  if [[ $continue_setup != "y" && $continue_setup != "Y" ]]; then
-    echo "Setup cancelled."
-    exit 1
+# Function to print section headers
+print_header() {
+  echo "${BOLD}${BLUE}=== $1 ===${RESET}"
+}
+
+# Function to print success messages
+print_success() {
+  echo "${GREEN}✓ $1${RESET}"
+}
+
+# Function to print warning messages
+print_warning() {
+  echo "${YELLOW}⚠ $1${RESET}"
+}
+
+# Function to print error messages
+print_error() {
+  echo "${RED}✗ $1${RESET}"
+}
+
+# Function to print info messages
+print_info() {
+  echo "${BLUE}ℹ $1${RESET}"
+}
+
+# Function to check if a command exists
+command_exists() {
+  command -v "$1" &> /dev/null
+}
+
+# Function to check if aliases are already installed
+aliases_installed() {
+  grep -q "$ALIASES_MARKER" ~/.zshrc 2>/dev/null
+  return $?
+}
+
+# Function to check if scripts are installed
+scripts_installed() {
+  [[ -f "$BIN_DIR/cc-start-day.sh" && -f "$BIN_DIR/cc-log-progress.sh" && \
+     -f "$BIN_DIR/cc-push-updates.sh" && -f "$BIN_DIR/cc-status.sh" ]]
+  return $?
+}
+
+# Check if program is already installed
+check_installed() {
+  local is_installed=false
+  
+  if [[ -f "$CONFIG_FILE" ]]; then
+    is_installed=true
+    current_version=$(grep "version=" "$CONFIG_FILE" 2>/dev/null | cut -d'=' -f2)
+    print_info "6/7 Coding Challenge is already installed (version $current_version)."
   fi
-fi
+  
+  if scripts_installed; then
+    is_installed=true
+    print_info "Scripts are installed in $BIN_DIR."
+  fi
+  
+  if aliases_installed; then
+    is_installed=true
+    print_info "Aliases are configured in ~/.zshrc."
+  fi
+  
+  if [[ -f "$DAY_COUNTER" ]]; then
+    is_installed=true
+    CURRENT_DAY=$(cat "$DAY_COUNTER" 2>/dev/null || echo "invalid")
+    print_info "Day counter is set to $CURRENT_DAY."
+  fi
+  
+  if [[ -d "$BASE_DIR" ]]; then
+    is_installed=true
+    print_info "Project directory exists at $BASE_DIR."
+  fi
+  
+  if $is_installed; then
+    echo ""
+    echo "It looks like 6/7 Coding Challenge is already installed."
+    echo "What would you like to do?"
+    echo ""
+    echo "1) Update to the latest version"
+    echo "2) Reinstall from scratch"
+    echo "3) Uninstall completely"
+    echo "4) Exit"
+    echo ""
+    read -p "Enter your choice (1-4): " choice
+    
+    case $choice in
+      1)
+        print_header "Updating 6/7 Coding Challenge"
+        return 2  # Update
+        ;;
+      2)
+        print_header "Reinstalling 6/7 Coding Challenge"
+        return 0  # Install
+        ;;
+      3)
+        print_header "Uninstalling 6/7 Coding Challenge"
+        return 1  # Uninstall
+        ;;
+      4|*)
+        print_info "Exiting..."
+        exit 0
+        ;;
+    esac
+  else
+    return 0  # Not installed, proceed with install
+  fi
+}
 
-# Create bin directory if it doesn't exist
-echo "Creating ~/bin directory if it doesn't exist..."
-mkdir -p ~/bin || { echo "Error: Failed to create ~/bin directory"; exit 1; }
+# Function to check prerequisites
+check_prerequisites() {
+  print_header "Checking Prerequisites"
+  
+  local prereqs_ok=true
+  
+  # Check for zsh
+  if [[ "$SHELL" != *"zsh"* ]]; then
+    print_warning "Current shell is not zsh. Some features may not work correctly."
+    prereqs_ok=false
+  else
+    print_success "zsh is your current shell."
+  fi
+  
+  # Check for git
+  if ! command_exists git; then
+    print_error "git is not installed. Please install git first."
+    prereqs_ok=false
+  else
+    print_success "git is installed ($(git --version | cut -d' ' -f3))."
+  fi
+  
+  # Check for tmux (optional but recommended)
+  if ! command_exists tmux; then
+    print_warning "tmux is not installed. It's recommended for the best experience."
+    print_info "For macOS: brew install tmux"
+    print_info "For Ubuntu/Debian: sudo apt install tmux"
+    print_info "For Fedora/RHEL: sudo dnf install tmux"
+  else
+    print_success "tmux is installed ($(tmux -V | cut -d' ' -f2))."
+  fi
+  
+  # Check for editor (nvim or vim)
+  if command_exists nvim; then
+    print_success "neovim is installed."
+  elif command_exists vim; then
+    print_success "vim is installed."
+  else
+    print_warning "Neither neovim nor vim is installed. A text editor is recommended."
+  fi
+  
+  # Check for Ruby (for Phase 1)
+  if command_exists ruby; then
+    print_success "Ruby is installed ($(ruby -v | cut -d' ' -f2))."
+  else
+    print_warning "Ruby is not installed. It will be needed for Phase 1."
+  fi
+  
+  # Check for ~/bin directory
+  if [[ ! -d "$BIN_DIR" ]]; then
+    print_info "~/bin directory does not exist. It will be created."
+  else
+    print_success "~/bin directory exists."
+  fi
+  
+  # Check if ~/bin is in PATH
+  if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+    print_warning "~/bin is not in your PATH. We'll add it to your .zshrc"
+  else
+    print_success "~/bin is in your PATH."
+  fi
+  
+  return $prereqs_ok
+}
 
-# Create cc-start-day.sh in bin directory
-echo "Creating cc-start-day.sh..."
-cat > ~/bin/cc-start-day.sh << 'EOF'
+# Function to install or update the configuration file
+setup_config_file() {
+  print_header "Setting up Configuration File"
+  
+  # Create or update config file
+  if [[ -f "$CONFIG_FILE" ]]; then
+    print_info "Updating existing configuration file."
+    # Preserve existing settings while adding new ones
+    local current_version=$(grep "version=" "$CONFIG_FILE" | cut -d'=' -f2)
+    if [[ "$current_version" != "$SCRIPT_VERSION" ]]; then
+      sed -i.bak "s/version=.*/version=$SCRIPT_VERSION/" "$CONFIG_FILE" 2>/dev/null || \
+        sed "s/version=.*/version=$SCRIPT_VERSION/" "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+      sed -i.bak "s/last_updated=.*/last_updated=$(date +"%Y-%m-%d")/" "$CONFIG_FILE" 2>/dev/null || \
+        sed "s/last_updated=.*/last_updated=$(date +"%Y-%m-%d")/" "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+      print_success "Updated version from $current_version to $SCRIPT_VERSION."
+    else
+      print_info "Configuration is already at version $SCRIPT_VERSION."
+    fi
+  else
+    print_info "Creating new configuration file."
+    cat > "$CONFIG_FILE" << EOF
+# 6/7 Coding Challenge Configuration
+version=$SCRIPT_VERSION
+install_date=$(date +"%Y-%m-%d")
+last_updated=$(date +"%Y-%m-%d")
+EOF
+    print_success "Configuration file created."
+  fi
+}
+
+# Function to set up scripts directory
+setup_bin_directory() {
+  print_header "Setting up Scripts Directory"
+  
+  # Create bin directory if it doesn't exist
+  if [[ ! -d "$BIN_DIR" ]]; then
+    mkdir -p "$BIN_DIR"
+    print_success "Created ~/bin directory."
+  else
+    print_info "~/bin directory already exists."
+  fi
+  
+  # Add bin to PATH if needed
+  if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+    echo 'export PATH="$HOME/bin:$PATH"' >> ~/.zshrc
+    print_success "Added ~/bin to PATH in .zshrc."
+  fi
+}
+
+# Function to create or update script files
+install_scripts() {
+  print_header "Installing/Updating Scripts"
+  
+  # Backup existing scripts if they exist
+  if scripts_installed; then
+    print_info "Backing up existing scripts..."
+    BACKUP_DIR="$BIN_DIR/cc-backup-$(date +%Y%m%d%H%M%S)"
+    mkdir -p "$BACKUP_DIR"
+    cp "$BIN_DIR/cc-"*.sh "$BACKUP_DIR/" 2>/dev/null
+    print_success "Existing scripts backed up to $BACKUP_DIR."
+  fi
+  
+  # Install updated scripts
+  print_info "Installing cc-start-day.sh..."
+  cat > "$BIN_DIR/cc-start-day.sh" << 'EOF'
 #!/bin/zsh
 
-# Get current phase, week, and day
+# Get current day
 if [[ ! -f ~/.cc-current-day ]]; then
   echo "Error: Day counter file not found. Creating with default value of 1."
   echo "1" > ~/.cc-current-day
@@ -81,6 +327,7 @@ mkdir -p $BASE_DIR/logs/phase$PHASE || { echo "Error: Failed to create log direc
 # Initialize log file if needed
 LOG_FILE=$BASE_DIR/logs/phase$PHASE/week$WEEK_FORMATTED.md
 if [[ ! -f $LOG_FILE ]]; then
+  echo "Creating new log file: $LOG_FILE"
   echo "# Week $WEEK_FORMATTED (Days $((($WEEK_IN_PHASE-1)*6+1))-$((($WEEK_IN_PHASE)*6)))" > $LOG_FILE
   echo "" >> $LOG_FILE
   echo "## Week Overview" >> $LOG_FILE
@@ -102,6 +349,8 @@ if [[ ! -f $PROJECT_DIR/README.md ]]; then
 # Day $CURRENT_DAY - Phase $PHASE (Week $WEEK_FORMATTED)
 
 ## Today's Focus
+- [ ] Primary goal: 
+- [ ] Secondary goal:
 - [ ] Stretch goal:
 
 ## Launch School Connection
@@ -122,53 +371,86 @@ fi
 
 # Check if tmux is installed
 if ! command -v tmux &> /dev/null; then
-  echo "Error: tmux is not installed. Please install tmux and try again."
-  echo "For macOS: brew install tmux"
-  echo "For Ubuntu/Debian: sudo apt install tmux"
-  exit 1
+  echo "Warning: tmux is not installed. Opening project directory without tmux."
+  # Set editor (default to vim if nvim is not available)
+  if command -v nvim &> /dev/null; then
+    EDITOR="nvim"
+  elif command -v vim &> /dev/null; then
+    EDITOR="vim"
+  else
+    EDITOR="${EDITOR:-vi}"
+  fi
+  
+  # Open the directory and file without tmux
+  cd $PROJECT_DIR
+  $EDITOR README.md
+  exit 0
 fi
 
-# Check if session exists and kill it if it does
-tmux has-session -t coding-challenge 2>/dev/null
-if [ $? -eq 0 ]; then
+# Set editor (default to vim if nvim is not available)
+if command -v nvim &> /dev/null; then
+  EDITOR="nvim"
+else
+  EDITOR="vim"
+fi
+
+# Kill existing session if it exists
+if tmux has-session -t coding-challenge 2>/dev/null; then
   echo "Existing session found. Killing it..."
   tmux kill-session -t coding-challenge
 fi
 
-# Create a new tmux session without attaching
-tmux new-session -d -s coding-challenge -n "code"
+# Create a new tmux session
+echo "Starting tmux session..."
+cd $PROJECT_DIR || { echo "Error: Failed to change to project directory"; exit 1; }
 
-# Configure the windows
-tmux split-window -v -p 30 -t coding-challenge
+# Create a detached session
+tmux new-session -d -s coding-challenge -c "$PROJECT_DIR"
 
-# Send commands to each pane
-tmux send-keys -t coding-challenge:0.0 "cd $PROJECT_DIR && clear" C-m
-tmux send-keys -t coding-challenge:0.1 "cd $PROJECT_DIR && nvim README.md" C-m
+# Split the window
+tmux split-window -v -p 30 -t coding-challenge -c "$PROJECT_DIR"
+
+# Send commands to the panes
+tmux send-keys -t coding-challenge:0.0 "clear" C-m
+tmux send-keys -t coding-challenge:0.1 "$EDITOR README.md" C-m
 
 # Attach to the session
-echo "Attaching to tmux session..."
 exec tmux attach-session -t coding-challenge
-# Note: Any code after the exec won't run as exec replaces the current process
 EOF
-
-# Make the script executable
-chmod +x ~/bin/cc-start-day.sh || { echo "Error: Failed to make script executable"; exit 1; }
-
-# Create cc-log-progress.sh in bin directory
-echo "Creating cc-log-progress.sh..."
-cat > ~/bin/cc-log-progress.sh << 'EOF'
+  
+  print_info "Installing cc-log-progress.sh..."
+  cat > "$BIN_DIR/cc-log-progress.sh" << 'EOF'
 #!/bin/zsh
 
-# Check if day counter exists
-if [[ ! -f ~/.cc-current-day ]]; then
-  echo "Error: Day counter file not found. Run setup script first."
+# Check if a specific day was requested
+if [[ $1 =~ ^[0-9]+$ ]]; then
+  LOG_DAY=$1
+  echo "Logging for specified day: $LOG_DAY"
+else
+  # If no day specified, use current day counter
+  if [[ ! -f ~/.cc-current-day ]]; then
+    echo "Error: Day counter file not found. Run setup script first."
+    exit 1
+  fi
+  LOG_DAY=$(cat ~/.cc-current-day 2>/dev/null || echo 1)
+  echo "Logging for current day: $LOG_DAY"
+fi
+
+# Validate the day number
+if [[ $LOG_DAY -lt 1 ]]; then
+  echo "Error: Invalid day number. Days start from 1."
   exit 1
 fi
 
-# Get current phase, week, and day
 CURRENT_DAY=$(cat ~/.cc-current-day 2>/dev/null || echo 1)
-PHASE=$((($CURRENT_DAY-1)/100+1))
-WEEK_IN_PHASE=$((($CURRENT_DAY-1)%100/6+1))
+if [[ $LOG_DAY -gt $CURRENT_DAY ]]; then
+  echo "Error: Cannot log for future days. Current day is $CURRENT_DAY."
+  exit 1
+fi
+
+# Calculate phase, week based on the day to log
+PHASE=$((($LOG_DAY-1)/100+1))
+WEEK_IN_PHASE=$((($LOG_DAY-1)%100/6+1))
 
 # Format week with leading zero
 WEEK_FORMATTED=$(printf "%02d" $WEEK_IN_PHASE)
@@ -194,20 +476,20 @@ if [[ ! -d $BASE_DIR ]]; then
   exit 1
 fi
 
-PROJECT_DIR=$BASE_DIR/$PHASE_DIR/week$WEEK_FORMATTED/day$CURRENT_DAY
+PROJECT_DIR=$BASE_DIR/$PHASE_DIR/week$WEEK_FORMATTED/day$LOG_DAY
 LOG_FILE=$BASE_DIR/logs/phase$PHASE/week$WEEK_FORMATTED.md
 
 # Check if project directory exists
 if [[ ! -d $PROJECT_DIR ]]; then
   echo "Error: Project directory not found at $PROJECT_DIR"
-  echo "Please run cc-start-day first."
+  echo "Please make sure you've initialized this day with cc-start-day."
   exit 1
 fi
 
 # Check if README exists
 if [[ ! -f $PROJECT_DIR/README.md ]]; then
   echo "Error: README.md not found in $PROJECT_DIR"
-  echo "Please run cc-start-day first."
+  echo "Please make sure you've initialized this day with cc-start-day."
   exit 1
 fi
 
@@ -221,6 +503,7 @@ fi
 # Check if log file exists, create if not
 if [[ ! -f $LOG_FILE ]]; then
   echo "Creating new log file: $LOG_FILE"
+  mkdir -p $(dirname $LOG_FILE) || { echo "Error: Failed to create log directory"; exit 1; }
   echo "# Week $WEEK_FORMATTED (Days $((($WEEK_IN_PHASE-1)*6+1))-$((($WEEK_IN_PHASE)*6)))" > $LOG_FILE
   echo "" >> $LOG_FILE
   echo "## Week Overview" >> $LOG_FILE
@@ -235,8 +518,59 @@ if [[ ! -f $LOG_FILE ]]; then
   echo "" >> $LOG_FILE
 fi
 
-# Append to log
-echo "## Day $CURRENT_DAY" >> $LOG_FILE || { echo "Error: Failed to write to log file"; exit 1; }
+# Check if day entry already exists
+if grep -q "## Day $LOG_DAY" "$LOG_FILE"; then
+  echo "Warning: An entry for Day $LOG_DAY already exists in the log file."
+  read -p "Do you want to replace it? (y/n): " replace_entry
+  if [[ $replace_entry != "y" && $replace_entry != "Y" ]]; then
+    echo "Operation canceled."
+    exit 0
+  fi
+  
+  # Remove the existing entry for this day (with newlines and all content until next day or EOF)
+  # This uses awk to find the start of the day section, then delete until it finds another day section or EOF
+  TMP_FILE=$(mktemp)
+  awk -v day="## Day $LOG_DAY" 'BEGIN{skip=0} 
+    /^## Day [0-9]+$/ && $0 != day {skip=0} 
+    $0 == day {skip=1; next} 
+    !skip {print}' "$LOG_FILE" > "$TMP_FILE"
+  
+  # Move the edited file back
+  mv "$TMP_FILE" "$LOG_FILE"
+  echo "Removed existing entry for Day $LOG_DAY"
+fi
+
+# Find the right spot to insert the new entry (entries should be in chronological order)
+TMP_FILE=$(mktemp)
+awk -v day=$LOG_DAY '
+  BEGIN { inserted=0 }
+  /^## Day ([0-9]+)$/ {
+    if (inserted == 0) {
+      day_num = $3 + 0; # Convert to number
+      if (day < day_num) {
+        print "## Day " day;
+        inserted=1;
+        print $0;
+        next;
+      }
+    }
+  }
+  # If we reach EOF and haven't inserted, add it at the end
+  END {
+    if (inserted == 0) {
+      print "## Day " day;
+    }
+  }
+  { print }
+' "$LOG_FILE" > "$TMP_FILE"
+
+# If we didn't insert in the middle (awk END block ran), then the entry should be at the end
+if ! grep -q "## Day $LOG_DAY" "$TMP_FILE"; then
+  echo "## Day $LOG_DAY" >> "$LOG_FILE"
+else
+  # Otherwise, update the original file with the new order
+  mv "$TMP_FILE" "$LOG_FILE"
+fi
 
 # Extract sections from README
 FOCUS_SECTION=$(echo "$README_CONTENT" | grep -A 10 "## Today's Focus" | grep -B 10 "## Launch School Connection" | grep -v "## Launch School Connection")
@@ -252,15 +586,11 @@ echo "### Reflections" >> $LOG_FILE || { echo "Error: Failed to append reflectio
 echo "$REFLECTIONS_SECTION" >> $LOG_FILE || { echo "Error: Failed to append reflections to log"; exit 1; }
 echo "" >> $LOG_FILE || { echo "Error: Failed to append newline to log"; exit 1; }
 
-echo "Progress successfully logged to $LOG_FILE"
+echo "Progress for Day $LOG_DAY successfully logged to $LOG_FILE"
 EOF
-
-# Make the script executable
-chmod +x ~/bin/cc-log-progress.sh || { echo "Error: Failed to make script executable"; exit 1; }
-
-# Create cc-push-updates.sh in bin directory
-echo "Creating cc-push-updates.sh..."
-cat > ~/bin/cc-push-updates.sh << 'EOF'
+  
+  print_info "Installing cc-push-updates.sh..."
+  cat > "$BIN_DIR/cc-push-updates.sh" << 'EOF'
 #!/bin/zsh
 
 # Check if day counter exists
@@ -365,13 +695,9 @@ echo "Phase $PHASE: $PHASE_NAME"
 echo "Tomorrow is Day $((CURRENT_DAY + 1))"
 echo "===================="
 EOF
-
-# Make the script executable
-chmod +x ~/bin/cc-push-updates.sh || { echo "Error: Failed to make script executable"; exit 1; }
-
-# Create cc-status.sh in bin directory
-echo "Creating cc-status.sh..."
-cat > ~/bin/cc-status.sh << 'EOF'
+  
+  print_info "Installing cc-status.sh..."
+  cat > "$BIN_DIR/cc-status.sh" << 'EOF'
 #!/bin/zsh
 
 # Check if day counter exists
@@ -535,120 +861,93 @@ fi
 
 echo "${BOLD}╚═══════════════════════════════════════════════════╝${RESET}"
 EOF
+  
+  # Create update script
+  print_info "Installing cc-update.sh..."
+  cat > "$BIN_DIR/cc-update.sh" << 'EOF'
+#!/bin/zsh
 
-# Make the script executable
-chmod +x ~/bin/cc-status.sh || { echo "Error: Failed to make script executable"; exit 1; }
+# Check if the setup script exists
+if [[ -f "$HOME/projects/6-7-coding-challenge/scripts/cc-setup.sh" ]]; then
+  echo "Running setup script in update mode..."
+  zsh "$HOME/projects/6-7-coding-challenge/scripts/cc-setup.sh" --update
+  exit $?
+else
+  echo "Error: Setup script not found. Please download the latest version manually."
+  echo "Visit: https://github.com/joshuamichaelhall-tech/6-7-coding-challenge"
+  exit 1
+fi
+EOF
+  
+  # Create uninstaller script
+  print_info "Installing cc-uninstall.sh..."
+  cat > "$BIN_DIR/cc-uninstall.sh" << 'EOF'
+#!/bin/zsh
 
-# Initialize day counter
-echo "Initializing day counter to 1..."
-echo "1" > ~/.cc-current-day || { echo "Error: Failed to initialize day counter"; exit 1; }
+# 6/7 Coding Challenge Uninstaller
+# This script removes all files and configurations related to the 6/7 Coding Challenge
 
-# Create initial directory structure
-echo "Creating directory structure..."
-BASE_DIR=~/projects/6-7-coding-challenge
-mkdir -p $BASE_DIR/{logs,phase1_ruby,phase2_python,phase3_javascript,phase4_fullstack,phase5_ml_finance} || { 
-  echo "Error: Failed to create project directories"; 
-  exit 1; 
+# Constants
+BIN_DIR=~/bin
+CONFIG_FILE=~/.cc-config
+DAY_COUNTER=~/.cc-current-day
+ALIASES_MARKER="# 6/7 Coding Challenge aliases"
+
+# Colors and formatting
+if command -v tput &> /dev/null; then
+  BOLD=$(tput bold)
+  GREEN=$(tput setaf 2)
+  YELLOW=$(tput setaf 3)
+  RED=$(tput setaf 1)
+  BLUE=$(tput setaf 4)
+  RESET=$(tput sgr0)
+else
+  BOLD=""
+  GREEN=""
+  YELLOW=""
+  RED=""
+  BLUE=""
+  RESET=""
+fi
+
+# Function to print section headers
+print_header() {
+  echo "${BOLD}${BLUE}=== $1 ===${RESET}"
 }
 
-# Create log directories for phase 1
-mkdir -p $BASE_DIR/logs/phase1 || { echo "Error: Failed to create log directories"; exit 1; }
+# Function to print success messages
+print_success() {
+  echo "${GREEN}✓ $1${RESET}"
+}
 
-# Create week directories for phase 1
-for i in {01..17}; do 
-  mkdir -p $BASE_DIR/phase1_ruby/week$i || { echo "Error: Failed to create week directory: week$i"; exit 1; }
-done
+# Function to print warning messages
+print_warning() {
+  echo "${YELLOW}⚠ $1${RESET}"
+}
 
-# Initialize git repository if it doesn't exist
-if [[ ! -d "$BASE_DIR/.git" ]]; then
-  echo "Initializing git repository..."
-  cd $BASE_DIR || { echo "Error: Failed to change to project directory"; exit 1; }
-  git init || { echo "Error: Failed to initialize git repository"; exit 1; }
-  
-  # Create initial .gitignore
-  cat > $BASE_DIR/.gitignore << 'GIT_IGNORE'
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# Function to print error messages
+print_error() {
+  echo "${RED}✗ $1${RESET}"
+}
 
-# Editor directories and files
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
+# Function to print info messages
+print_info() {
+  echo "${BLUE}ℹ $1${RESET}"
+}
 
-# Environment files
-.env
-.env.local
-
-# Language specific
-*.gem
-*.rbc
-__pycache__/
-*.py[cod]
-node_modules/
-GIT_IGNORE
-
-  # Initial commit
-  git add . || { echo "Error: Failed to add files to git"; exit 1; }
-  git commit -m "Initial 6/7 Coding Challenge setup" || { echo "Warning: Initial commit failed"; }
-  
-  echo "Git repository initialized with initial commit."
-  echo "Remember to add a remote with:"
-  echo "git remote add origin YOUR_REPOSITORY_URL"
-fi
-
-# Add aliases to .zshrc if they don't exist
-if ! grep -q "# 6/7 Coding Challenge aliases" ~/.zshrc; then
-  echo "Adding aliases to .zshrc..."
-  cat >> ~/.zshrc << 'EOF'
-
-# 6/7 Coding Challenge aliases
-alias ccstart="~/bin/cc-start-day.sh"
-alias cclog="~/bin/cc-log-progress.sh"
-alias ccpush="~/bin/cc-push-updates.sh"
-alias ccstatus="~/bin/cc-status.sh"
-EOF
-  if [[ $? -ne 0 ]]; then
-    echo "Warning: Failed to add aliases to .zshrc. You'll need to add them manually."
-  else
-    echo "Aliases added to .zshrc."
-  fi
-else
-  echo "Aliases already exist in .zshrc."
-fi
-
-# Show setup completion message
+# Ask for confirmation
+print_header "6/7 Coding Challenge Uninstaller"
+echo "This will remove all 6/7 Coding Challenge scripts and configurations."
+echo "${YELLOW}Warning: This will not remove your project files or logs by default.${RESET}"
+echo "Project files will remain in ~/projects/6-7-coding-challenge/"
 echo ""
-echo "╔═══════════════════════════════════════════════════╗"
-echo "║       6/7 CODING CHALLENGE SETUP COMPLETE          ║"
-echo "╠═══════════════════════════════════════════════════╣"
-echo "║ Your 6/7 Coding Challenge environment is ready:    ║"
-echo "║                                                   ║"
-echo "║ • Scripts installed to ~/bin/                      ║"
-echo "║ • Project structure created at:                    ║"
-echo "║   ~/projects/6-7-coding-challenge/                 ║"
-echo "║ • Day counter initialized to 1                     ║"
-echo "║ • Git repository initialized                       ║"
-echo "║                                                   ║"
-echo "║ Commands available:                                ║"
-echo "║   ccstart  - Start the day's coding session        ║"
-echo "║   cclog    - Log progress to weekly log file       ║"
-echo "║   ccpush   - Commit and push changes               ║"
-echo "║   ccstatus - Show challenge progress               ║"
-echo "║                                                   ║"
-echo "╠═══════════════════════════════════════════════════╣"
-echo "║ To begin:                                          ║"
-echo "║ 1. Source your .zshrc:                             ║"
-echo "║    source ~/.zshrc                                 ║"
-echo "║ 2. Start your first day:                           ║"
-echo "║    ccstart                                         ║"
-echo "╚═══════════════════════════════════════════════════╝" Primary goal: 
-- [ ] Secondary goal:
-- [ ]
+read -p "Are you sure you want to continue? (y/n): " confirm
+if [[ $confirm != "y" && $confirm != "Y" ]]; then
+  echo "Uninstallation cancelled."
+  exit 0
+fi
+
+# Remove scripts from bin directory
+print_header "Removing Scripts"
+if [[ -d "$BIN_DIR" ]]; then
+  for script in cc-start-day.sh cc-log-
