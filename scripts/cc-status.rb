@@ -122,7 +122,7 @@ if Dir.exist?(File.join(BASE_DIR, '.git'))
     
     while true
       yesterday_str = yesterday.strftime("%Y-%m-%d")
-      has_commit = system("git log --since=\"#{yesterday_str}\" --until=\"#{yesterday_str} 23:59:59\" --pretty=format:%H | grep -q .", out: File::NULL, err: File::NULL)
+      has_commit = system("git log --since=\"#{yesterday_str}\" --until=\"#{yesterday_str} 23:59:59\" --pretty=format:%H | grep -q .", :out => File::NULL, :err => File::NULL)
       
       break unless has_commit
       
