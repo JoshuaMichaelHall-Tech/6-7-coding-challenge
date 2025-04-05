@@ -131,6 +131,15 @@ See the following documentation files for more details:
 - [About the Challenge](ABOUT.md): Philosophy and motivation behind the challenge
 - [Implementation Guide](implementation-guide.md): Detailed guide for the Ruby installer
 
+## Acknowledgements
+
+This project was developed with assistance from Anthropic's Claude AI assistant, which helped with:
+- Documentation writing and organization
+- Code structure suggestions
+- Troubleshooting and debugging assistance
+
+Claude was used as a development aid while all final implementation decisions and code review were performed by the human developer.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.txt) file for details.
