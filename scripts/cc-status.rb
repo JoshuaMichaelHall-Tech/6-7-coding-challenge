@@ -57,8 +57,14 @@ begin
   days_elapsed = (CURRENT_DATE - START_DATE).to_i
   
   # Adjust for Sundays (don't count them in the challenge)
-  weeks_elapsed = days_elapsed / 7
-  sundays_elapsed = weeks_elapsed
+  # Count actual Sundays that have passed, not just weeks_elapsed
+  sundays_elapsed = 0
+  date_counter = START_DATE
+  while date_counter <= CURRENT_DATE
+    sundays_elapsed += 1 if date_counter.wday == 0  # Sunday is 0 in Ruby's wday
+    date_counter += 1
+  end
+  
   actual_days_elapsed = days_elapsed - sundays_elapsed
   
   # Calculate expected day vs actual day
