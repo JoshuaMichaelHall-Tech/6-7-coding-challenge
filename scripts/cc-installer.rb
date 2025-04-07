@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# 6/7 Coding Challenge Installer
-# A Ruby implementation of the setup script
+# 6/7 Coding Challenge - Installer Script
+# A Ruby implementation of the setup script for 6/7 Coding Challenge
 # Author: Joshua Michael Hall
 
 require 'fileutils'
@@ -32,33 +32,13 @@ class CodingChallengeInstaller
     alias ccuninstall="#{BIN_DIR}/cc-uninstall.rb"
   ALIASES
 
-  # Scripts to create
-  SCRIPTS = {
-    'cc-start-day.rb' => {
-      desc: 'Initialize the environment for a new challenge day',
-      content: nil # Will be filled in
-    },
-    'cc-log-progress.rb' => {
-      desc: 'Record daily progress in weekly log files',
-      content: nil # Will be filled in
-    },
-    'cc-push-updates.rb' => {
-      desc: 'Commit changes and increment the day counter',
-      content: nil # Will be filled in
-    },
-    'cc-status.rb' => {
-      desc: 'Display challenge progress and statistics',
-      content: nil # Will be filled in
-    },
-    'cc-update.rb' => {
-      desc: 'Update scripts to the latest version',
-      content: nil # Will be filled in
-    },
-    'cc-uninstall.rb' => {
-      desc: 'Remove scripts and configuration',
-      content: nil # Will be filled in
-    }
-  }
+  # ANSI color codes
+  RESET = "\e[0m"
+  BOLD = "\e[1m"
+  GREEN = "\e[32m"
+  YELLOW = "\e[33m"
+  BLUE = "\e[34m"
+  RED = "\e[31m"
 
   # Constructor
   def initialize
@@ -75,6 +55,34 @@ class CodingChallengeInstaller
       4 => "phase4_fullstack",
       5 => "phase5_ml_finance"
     }
+  end
+
+  # Colorize text
+  def colorize(text, color_code)
+    return text if ENV['NO_COLOR']
+    "#{color_code}#{text}#{RESET}"
+  end
+
+  # Output formatting
+  def puts_header(text)
+    puts "\n#{colorize(text, BOLD)}"
+    puts "=" * text.length
+  end
+
+  def puts_success(text)
+    puts "#{colorize('✓', GREEN)} #{text}"
+  end
+
+  def puts_warning(text)
+    puts "#{colorize('!', YELLOW)} #{text}"
+  end
+
+  def puts_error(text)
+    puts "#{colorize('✗', RED)} #{text}"
+  end
+
+  def puts_info(text)
+    puts "#{colorize('ℹ', BLUE)} #{text}"
   end
 
   # Parse command line options
@@ -112,6 +120,21 @@ class CodingChallengeInstaller
         exit
       end
     end.parse!
+  end
+
+  # Check if a command exists
+  def command_exists?(command)
+    system("which #{command} > /dev/null 2>&1")
+  end
+
+  # Check if scripts are installed
+  def scripts_installed?
+    Dir.glob(File.join(BIN_DIR, "cc-*.rb")).any?
+  end
+
+  # Check if aliases are installed
+  def aliases_installed?
+    File.exist?(ZSHRC_FILE) && File.read(ZSHRC_FILE).include?(ALIASES_MARKER)
   end
 
   # Run the installer
@@ -169,8 +192,7 @@ class CodingChallengeInstaller
     end
     
     if is_installed
-      puts ""
-      puts "It looks like 6/7 Coding Challenge is already installed."
+      puts "\nIt looks like 6/7 Coding Challenge is already installed."
       puts "What would you like to do?"
       puts ""
       puts "1) Update to the latest version"
@@ -476,14 +498,29 @@ class CodingChallengeInstaller
   def create_script_files
     puts_header "Creating Script Files"
     
-    # Create each script
-    SCRIPTS.each do |filename, info|
+    # Define the scripts we'll create
+    scripts = {
+      'cc-start-day.rb' => File.read(File.join(File.dirname(__FILE__), 'cc-start-day.rb')),
+      'cc-log-progress.rb' => File.read(File.join(File.dirname(__FILE__), 'cc-log-progress.rb')),
+      'cc-push-updates.rb' => File.read(File.join(File.dirname(__FILE__), 'cc-push-updates.rb')),
+      'cc-status.rb' => File.read(File.join(File.dirname(__FILE__), 'cc-status.rb')),
+      'cc-update.rb' => File.read(File.join(File.dirname(__FILE__), 'cc-update.rb')),
+      'cc-uninstall.rb' => File.read(File.join(File.dirname(__FILE__), 'cc-uninstall.rb'))
+    }
+    
+    # Check if scripts exist in current directory, if not use embedded scripts
+    scripts.each do |filename, content|
+      if content.nil? || content.empty?
+        local_script = File.join(File.dirname(__FILE__), filename)
+        if File.exist?(local_script)
+          content = File.read(local_script)
+        else
+          puts_error "Script content for #{filename} not found."
+          exit 1
+        end
+      end
+      
       script_path = File.join(BIN_DIR, filename)
-      
-      # Generate the script content
-      content = send("generate_#{filename.gsub('.rb', '').gsub('-', '_')}")
-      
-      # Write the script
       File.write(script_path, content)
       FileUtils.chmod(0755, script_path) # Make executable
       
@@ -692,414 +729,9 @@ class CodingChallengeInstaller
       puts_success "Created .gitignore file."
     end
   end
-
-  # Generate start day script
-  def generate_cc_start_day
-    <<~RUBY
-      #!/usr/bin/env ruby
-      # frozen_string_literal: true
-      
-      # 6/7 Coding Challenge - Start Day Script
-      # Initializes the environment for a new challenge day
-      
-      require 'fileutils'
-      require 'date'
-      
-      # Constants
-      HOME_DIR = ENV['HOME']
-      BASE_DIR = File.join(HOME_DIR, 'projects', '6-7-coding-challenge')
-      DAY_COUNTER = File.join(HOME_DIR, '.cc-current-day')
-      
-      # Get current day
-      unless File.exist?(DAY_COUNTER)
-        puts "Error: Day counter file not found. Creating with default value of 1."
-        File.write(DAY_COUNTER, "1")
-      end
-      
-      CURRENT_DAY = File.read(DAY_COUNTER).strip.to_i
-      PHASE = ((CURRENT_DAY - 1) / 100) + 1
-      WEEK_IN_PHASE = (((CURRENT_DAY - 1) % 100) / 6) + 1
-      DAY_OF_WEEK = Date.today.cwday # 1-7, where 1 is Monday and 7 is Sunday
-      
-      # Check if it's Sunday
-      if DAY_OF_WEEK == 7
-        puts "Today is the Sabbath. Time for rest, not coding."
-        exit 0
-      end
-      
-      # Format week with leading zero
-      WEEK_FORMATTED = format('%02d', WEEK_IN_PHASE)
-      
-      # Set phase directory
-      PHASE_DIRS = {
-        1 => "phase1_ruby",
-        2 => "phase2_python",
-        3 => "phase3_javascript",
-        4 => "phase4_fullstack",
-        5 => "phase5_ml_finance"
-      }
-      
-      PHASE_DIR = PHASE_DIRS[PHASE]
-      
-      # Check if base directory exists
-      unless Dir.exist?(BASE_DIR)
-        puts "Error: Base project directory not found at \#{BASE_DIR}"
-        puts "Please run the setup script first."
-        exit 1
-      end
-      
-      # Create directories if needed
-      PROJECT_DIR = File.join(BASE_DIR, PHASE_DIR, "week\#{WEEK_FORMATTED}", "day\#{CURRENT_DAY}")
-      FileUtils.mkdir_p(PROJECT_DIR)
-      
-      LOG_DIR = File.join(BASE_DIR, 'logs', "phase\#{PHASE}")
-      FileUtils.mkdir_p(LOG_DIR)
-      
-      # Initialize log file if needed
-      LOG_FILE = File.join(LOG_DIR, "week\#{WEEK_FORMATTED}.md")
-      
-      unless File.exist?(LOG_FILE)
-        puts "Creating new log file: \#{LOG_FILE}"
-        week_start = ((WEEK_IN_PHASE - 1) * 6) + 1
-        week_end = WEEK_IN_PHASE * 6
-        
-        File.open(LOG_FILE, 'w') do |f|
-          f.puts "# Week \#{WEEK_FORMATTED} (Days \#{week_start}-\#{week_end})"
-          f.puts ""
-          f.puts "## Week Overview"
-          f.puts "- **Focus**: "
-          f.puts "- **Launch School Connection**: "
-          f.puts "- **Weekly Goals**:"
-          f.puts "  - "
-          f.puts "  - "
-          f.puts "  - "
-          f.puts ""
-          f.puts "## Daily Logs"
-          f.puts ""
-        end
-      end
-      
-      # Set up the day's work if README doesn't exist
-      README_PATH = File.join(PROJECT_DIR, 'README.md')
-      
-      unless File.exist?(README_PATH)
-        puts "Setting up Day \#{CURRENT_DAY} (Phase \#{PHASE}, Week \#{WEEK_FORMATTED})"
-        
-        File.open(README_PATH, 'w') do |f|
-          f.puts "# Day \#{CURRENT_DAY} - Phase \#{PHASE} (Week \#{WEEK_FORMATTED})"
-          f.puts ""
-          f.puts "## Today's Focus"
-          f.puts "- [ ] Primary goal: "
-          f.puts "- [ ] Secondary goal:"
-          f.puts "- [ ] Stretch goal:"
-          f.puts ""
-          f.puts "## Launch School Connection"
-          f.puts "- Current course: "
-          f.puts "- Concept application: "
-          f.puts ""
-          f.puts "## Progress Log"
-          f.puts "- Started: \#{Time.now.strftime('%Y-%m-%d %H:%M')}"
-          f.puts "- "
-          f.puts ""
-          f.puts "## Reflections"
-          f.puts "-"
-          f.puts ""
-        end
-      else
-        puts "Using existing README for Day \#{CURRENT_DAY}"
-      end
-      
-      # Determine editor
-      if system("which nvim > /dev/null 2>&1")
-        EDITOR = "nvim"
-      elsif system("which vim > /dev/null 2>&1")
-        EDITOR = "vim"
-      else
-        EDITOR = ENV['EDITOR'] || "vi"
-      end
-      
-      # Check if tmux is installed
-      if system("which tmux > /dev/null 2>&1")
-        # Kill existing session if it exists
-        system("tmux has-session -t coding-challenge 2>/dev/null && tmux kill-session -t coding-challenge")
-        
-        # Change to project directory
-        Dir.chdir(PROJECT_DIR)
-        
-        # Start tmux session
-        puts "Starting tmux session..."
-        exec "tmux new-session -s coding-challenge '\#{EDITOR} README.md'"
-      else
-        puts "Warning: tmux is not installed. Opening project directory without tmux."
-        Dir.chdir(PROJECT_DIR)
-        exec "\#{EDITOR} README.md"
-      end
-    RUBY
-  end
-
-  # Generate log progress script
-def generate_cc_log_progress
-  <<~RUBY
-    #!/usr/bin/env ruby
-    # frozen_string_literal: true
-    
-    # 6/7 Coding Challenge - Log Progress Script
-    # Records daily progress in weekly log files
-    # Supports retroactive logging for previous days
-    
-    require 'fileutils'
-    
-    # Constants
-    HOME_DIR = ENV['HOME']
-    BASE_DIR = File.join(HOME_DIR, 'projects', '6-7-coding-challenge')
-    DAY_COUNTER = File.join(HOME_DIR, '.cc-current-day')
-    
-    # Helper method to extract section from README
-    def extract_section(content, section_start, section_end)
-      pattern_start = "## \#{section_start}"
-      pattern_end = section_end ? "## \#{section_end}" : nil
-      
-      start_index = content.index(pattern_start)
-      return "" unless start_index
-      
-      if pattern_end
-        end_index = content.index(pattern_end, start_index)
-        return "" unless end_index
-        
-        section = content[start_index...end_index]
-      else
-        section = content[start_index..-1]
-      end
-      
-      # Remove the header itself
-      section = section.sub(pattern_start, "").strip
-      
-      # Return the section
-      section
-    end
-    
-    # Process command line arguments
-    if ARGV[0] && ARGV[0] =~ /^\\d+$/
-      LOG_DAY = ARGV[0].to_i
-      puts "Logging for specified day: \#{LOG_DAY}"
-    else
-      # If no day specified, use current day counter
-      unless File.exist?(DAY_COUNTER)
-        puts "Error: Day counter file not found. Run setup script first."
-        exit 1
-      end
-      
-      LOG_DAY = File.read(DAY_COUNTER).strip.to_i
-      puts "Logging for current day: \#{LOG_DAY}"
-    end
-    
-    # Validate the day number
-    if LOG_DAY < 1
-      puts "Error: Invalid day number. Days start from 1."
-      exit 1
-    end
-    
-    CURRENT_DAY = File.read(DAY_COUNTER).strip.to_i
-    if LOG_DAY > CURRENT_DAY
-      puts "Error: Cannot log for future days. Current day is \#{CURRENT_DAY}."
-      exit 1
-    end
-    
-    # Calculate phase, week based on the day to log
-    PHASE = ((LOG_DAY - 1) / 100) + 1
-    WEEK_IN_PHASE = (((LOG_DAY - 1) % 100) / 6) + 1
-    
-    # Format week with leading zero
-    WEEK_FORMATTED = format('%02d', WEEK_IN_PHASE)
-    
-    # Set phase directory
-    PHASE_DIRS = {
-      1 => "phase1_ruby",
-      2 => "phase2_python",
-      3 => "phase3_javascript",
-      4 => "phase4_fullstack",
-      5 => "phase5_ml_finance"
-    }
-    
-    PHASE_DIR = PHASE_DIRS[PHASE]
-    
-    # Check if base directory exists
-    unless Dir.exist?(BASE_DIR)
-      puts "Error: Base project directory not found at \#{BASE_DIR}"
-      puts "Please run the setup script first."
-      exit 1
-    end
-    
-    # Set paths
-    PROJECT_DIR = File.join(BASE_DIR, PHASE_DIR, "week\#{WEEK_FORMATTED}", "day\#{LOG_DAY}")
-    LOG_FILE = File.join(BASE_DIR, 'logs', "phase\#{PHASE}", "week\#{WEEK_FORMATTED}.md")
-
-    # Check if project directory exists
-    unless Dir.exist?(PROJECT_DIR)
-      puts "Error: Project directory not found at \#{PROJECT_DIR}"
-      puts "Please make sure you've initialized this day with ccstart."
-      exit 1
-    end
-
-    # Check if README exists
-    README_PATH = File.join(PROJECT_DIR, 'README.md')
-    unless File.exist?(README_PATH)
-      puts "Error: README.md not found in \#{PROJECT_DIR}"
-      puts "Please make sure you've initialized this day with ccstart."
-      exit 1
-    end
-
-    # Read README content
-    readme_content = File.read(README_PATH)
-    
-    # Create log directory if needed
-    log_dir = File.dirname(LOG_FILE)
-    FileUtils.mkdir_p(log_dir) unless Dir.exist?(log_dir)
-
-    # Check if log file exists, create if not
-    unless File.exist?(LOG_FILE)
-      puts "Creating new log file: \#{LOG_FILE}"
-      week_start = ((WEEK_IN_PHASE - 1) * 6) + 1
-      week_end = WEEK_IN_PHASE * 6
-      
-      File.open(LOG_FILE, 'w') do |f|
-        f.puts "# Week \#{WEEK_FORMATTED} (Days \#{week_start}-\#{week_end})"
-        f.puts ""
-        f.puts "## Week Overview"
-        f.puts "- **Focus**: "
-        f.puts "- **Launch School Connection**: "
-        f.puts "- **Weekly Goals**:"
-        f.puts "  - "
-        f.puts "  - "
-        f.puts "  - "
-        f.puts ""
-        f.puts "## Daily Logs"
-        f.puts ""
-      end
-    end
-
-    # Check if day entry already exists
-    log_content = File.read(LOG_FILE)
-    day_entry_pattern = /^## Day \#{LOG_DAY}$/
-
-    if log_content.match(day_entry_pattern)
-      puts "Warning: An entry for Day \#{LOG_DAY} already exists in the log file."
-      print "Do you want to replace it? (y/n): "
-      replace_entry = STDIN.gets.chomp.downcase
-      
-      if replace_entry != 'y'
-        puts "Operation canceled."
-        exit 0
-      end
-      
-      # Remove existing entry
-      lines = log_content.split("\\n")
-      start_index = lines.find_index { |line| line.match(day_entry_pattern) }
-      
-      if start_index
-        # Find the end of this entry (next day entry or end of file)
-        end_index = lines[start_index+1..-1].find_index { |line| line.match(/^## Day \\d+$/) }
-        
-        if end_index
-          end_index += start_index + 1 # Adjust for the slice from start_index+1
-        else
-          end_index = lines.length
-        end
-        
-        # Remove the entry
-        lines.slice!(start_index...end_index)
-        
-        # Write updated content back
-        File.write(LOG_FILE, lines.join("\\n"))
-        puts "Removed existing entry for Day \#{LOG_DAY}"
-      end
-    end
-
-    # Find the right spot to insert the new entry (entries should be in chronological order)
-    lines = File.readlines(LOG_FILE, chomp: true)
-    day_entries = lines.each_with_index.select { |line, _| line.match(/^## Day \\d+$/) }
-    
-    insert_index = nil
-    inserted = false
-    
-    day_entries.each do |entry, index|
-      entry_day = entry.match(/^## Day (\\d+)$/)[1].to_i
-      if LOG_DAY < entry_day
-        insert_index = index
-        inserted = true
-        break
-      end
-    end
-    
-    if inserted
-      # Insert at the appropriate spot
-      day_entry = "## Day \#{LOG_DAY}"
-      lines.insert(insert_index, day_entry)
-    else
-      # Append to the end
-      day_entry = "## Day \#{LOG_DAY}"
-      # Find the last daily log entry or the Daily Logs header
-      last_entry_index = day_entries.empty? ? 
-        lines.find_index { |line| line.match(/^## Daily Logs$/) } : 
-        day_entries.last[1]
-        
-      if last_entry_index
-        # Find the next section after the last entry
-        next_section_index = lines[last_entry_index+1..-1].find_index { |line| line.match(/^## /) }
-        
-        if next_section_index
-          insert_index = last_entry_index + 1 + next_section_index
-          lines.insert(insert_index, "", day_entry)
-        else
-          lines << "" << day_entry
-        end
-      else
-        lines << "" << day_entry
-      end
-    end
-    
-    # Extract sections from README
-    focus_section = extract_section(readme_content, "Today's Focus", "Launch School Connection")
-    ls_section = extract_section(readme_content, "Launch School Connection", "Progress Log")
-    progress_section = extract_section(readme_content, "Progress Log", "Reflections")
-    reflections_section = extract_section(readme_content, "Reflections", nil)
-    
-    # Find the index right after the day entry
-    day_index = lines.find_index { |line| line == day_entry }
-    
-    if day_index
-      # Insert content after the day entry
-      current_index = day_index + 1
-      
-      # Add focus section
-      focus_lines = focus_section.split("\\n")
-      lines.insert(current_index, *focus_lines)
-      current_index += focus_lines.length
-      
-      # Add LS section
-      ls_lines = ls_section.split("\\n")
-      lines.insert(current_index, *ls_lines)
-      current_index += ls_lines.length
-      
-      # Add progress section
-      progress_lines = progress_section.split("\\n")
-      lines.insert(current_index, *progress_lines)
-      current_index += progress_lines.length
-      
-      # Add reflections section
-      lines.insert(current_index, "### Reflections")
-      reflections_lines = reflections_section.split("\\n")
-      lines.insert(current_index + 1, *reflections_lines)
-      current_index += reflections_lines.length + 1
-      
-      # Add blank line
-      lines.insert(current_index, "")
-    end
-    
-    # Write updated content
-    File.write(LOG_FILE, lines.join("\\n"))
-    
-    puts "Progress for Day \#{LOG_DAY} successfully logged to \#{LOG_FILE}"
-  RUBY
 end
+
+if __FILE__ == $PROGRAM_NAME
+  installer = CodingChallengeInstaller.new
+  installer.run
 end
