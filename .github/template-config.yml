@@ -17,6 +17,10 @@ template:
     - "CONTRIBUTING.md"
     - "LICENSE.txt"
     - ".github/template-config.yml"
+    - ".obsidian/"
+    - "docs/.obsidian/"
+    - "*/obsidian/"
+    - "**/.obsidian/"
 
   # Template description shown on GitHub
   description: "A personalized commitment to code for 500 days, six days a week, while honoring the Sabbath."

@@ -24,6 +24,71 @@ source ~/.zshrc
 ccstart
 ```
 
+## Using This Repository as a Template
+
+This repository is set up as a GitHub template, making it easy to create your own 6/7 Coding Challenge repository without forking or copying files manually.
+
+### Creating Your Repository from This Template
+
+1. **Navigate to the template repository**: Go to [github.com/joshuamichaelhall-tech/6-7-coding-challenge](https://github.com/joshuamichaelhall-tech/6-7-coding-challenge)
+
+2. **Click the "Use this template" button**: Look for the green button near the top of the repository page.
+   
+   ![Use this template button](https://docs.github.com/assets/cb-77734/mw-1440/images/help/repository/use-this-template-button.webp)
+
+3. **Create a new repository**:
+   - Enter a name for your repository (e.g., "my-coding-challenge")
+   - Choose visibility (public or private)
+   - Click "Create repository from template"
+
+4. **Clone your new repository**:
+   ```bash
+   git clone https://github.com/YOUR-USERNAME/YOUR-REPO-NAME.git
+   cd YOUR-REPO-NAME
+   ```
+
+5. **Run the installer**:
+   ```bash
+   mkdir -p ~/bin
+   cp scripts/cc-installer.rb ~/bin/
+   chmod +x ~/bin/cc-installer.rb
+   ruby ~/bin/cc-installer.rb
+   ```
+
+6. **Customize the configuration**:
+   Follow the interactive prompts to personalize your challenge settings.
+
+7. **Start your journey**:
+   ```bash
+   source ~/.zshrc
+   ccstart
+   ```
+
+### What's Included in Your Template Repository
+
+When you create a repository from this template, you'll get:
+
+- The complete directory structure for all phases
+- All automation scripts for daily tracking and logging
+- Comprehensive documentation
+- Initial setup for your first day
+
+You will NOT get:
+- My personal progress or logs
+- CI/CD workflows specific to the original repository
+- Template configuration files
+
+This gives you a clean slate to start your own 6/7 Coding Challenge journey with all the infrastructure already in place!
+
+### Personalizing Your Repository
+
+After creating from the template, be sure to:
+
+1. Update the README.md with your specific goals and plans
+2. Customize the configuration using `ccconfig --interactive`
+3. Set up your GitHub information for proper attribution
+4. Modify phase content to match your learning objectives
+
 ## What Is It?
 
 The 6/7 Coding Challenge is a structured approach to mastering software engineering through consistent practice while honoring the Sabbath. It combines:
