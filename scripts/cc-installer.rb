@@ -10,7 +10,7 @@ require 'optparse'
 require 'json'
 
 class CodingChallengeInstaller
-  VERSION = '2.0.0'
+  VERSION = '2.0.1'
   
   # Paths
   HOME_DIR = ENV['HOME']
@@ -838,661 +838,268 @@ class CodingChallengeInstaller
   end
 
   # Generate log progress script
-  def generate_cc_log_progress
-    <<~RUBY
-      #!/usr/bin/env ruby
-      # frozen_string_literal: true
+def generate_cc_log_progress
+  <<~RUBY
+    #!/usr/bin/env ruby
+    # frozen_string_literal: true
+    
+    # 6/7 Coding Challenge - Log Progress Script
+    # Records daily progress in weekly log files
+    # Supports retroactive logging for previous days
+    
+    require 'fileutils'
+    
+    # Constants
+    HOME_DIR = ENV['HOME']
+    BASE_DIR = File.join(HOME_DIR, 'projects', '6-7-coding-challenge')
+    DAY_COUNTER = File.join(HOME_DIR, '.cc-current-day')
+    
+    # Helper method to extract section from README
+    def extract_section(content, section_start, section_end)
+      pattern_start = "## \#{section_start}"
+      pattern_end = section_end ? "## \#{section_end}" : nil
       
-      # 6/7 Coding Challenge - Log Progress Script
-      # Records daily progress in weekly log files
-      # Supports retroactive logging for previous days
+      start_index = content.index(pattern_start)
+      return "" unless start_index
       
-      require 'fileutils'
-      
-      # Constants
-      HOME_DIR = ENV['HOME']
-      BASE_DIR = File.join(HOME_DIR, 'projects', '6-7-coding-challenge')
-      DAY_COUNTER = File.join(HOME_DIR, '.cc-current-day')
-      
-      # Process command line arguments
-      if ARGV[0] && ARGV[0] =~ /^\\d+$/
-        LOG_DAY = ARGV[0].to_i
-        puts "Logging for specified day: \#{LOG_DAY}"
+      if pattern_end
+        end_index = content.index(pattern_end, start_index)
+        return "" unless end_index
+        
+        section = content[start_index...end_index]
       else
-        # If no day specified, use current day counter
-        unless File.exist?(DAY_COUNTER)
-          puts "Error: Day counter file not found. Run setup script first."
-          exit 1
-        end
-        
-        LOG_DAY = File.read(DAY_COUNTER).strip.to_i
-        puts "Logging for current day: \#{LOG_DAY}"
+        section = content[start_index..-1]
       end
       
-      # Validate the day number
-      if LOG_DAY < 1
-        puts "Error: Invalid day number. Days start from 1."
+      # Remove the header itself
+      section = section.sub(pattern_start, "").strip
+      
+      # Return the section
+      section
+    end
+    
+    # Process command line arguments
+    if ARGV[0] && ARGV[0] =~ /^\\d+$/
+      LOG_DAY = ARGV[0].to_i
+      puts "Logging for specified day: \#{LOG_DAY}"
+    else
+      # If no day specified, use current day counter
+      unless File.exist?(DAY_COUNTER)
+        puts "Error: Day counter file not found. Run setup script first."
         exit 1
       end
       
-      CURRENT_DAY = File.read(DAY_COUNTER).strip.to_i
-      if LOG_DAY > CURRENT_DAY
-        puts "Error: Cannot log for future days. Current day is \#{CURRENT_DAY}."
-        exit 1
+      LOG_DAY = File.read(DAY_COUNTER).strip.to_i
+      puts "Logging for current day: \#{LOG_DAY}"
+    end
+    
+    # Validate the day number
+    if LOG_DAY < 1
+      puts "Error: Invalid day number. Days start from 1."
+      exit 1
+    end
+    
+    CURRENT_DAY = File.read(DAY_COUNTER).strip.to_i
+    if LOG_DAY > CURRENT_DAY
+      puts "Error: Cannot log for future days. Current day is \#{CURRENT_DAY}."
+      exit 1
+    end
+    
+    # Calculate phase, week based on the day to log
+    PHASE = ((LOG_DAY - 1) / 100) + 1
+    WEEK_IN_PHASE = (((LOG_DAY - 1) % 100) / 6) + 1
+    
+    # Format week with leading zero
+    WEEK_FORMATTED = format('%02d', WEEK_IN_PHASE)
+    
+    # Set phase directory
+    PHASE_DIRS = {
+      1 => "phase1_ruby",
+      2 => "phase2_python",
+      3 => "phase3_javascript",
+      4 => "phase4_fullstack",
+      5 => "phase5_ml_finance"
+    }
+    
+    PHASE_DIR = PHASE_DIRS[PHASE]
+    
+    # Check if base directory exists
+    unless Dir.exist?(BASE_DIR)
+      puts "Error: Base project directory not found at \#{BASE_DIR}"
+      puts "Please run the setup script first."
+      exit 1
+    end
+    
+    # Set paths
+    PROJECT_DIR = File.join(BASE_DIR, PHASE_DIR, "week\#{WEEK_FORMATTED}", "day\#{LOG_DAY}")
+    LOG_FILE = File.join(BASE_DIR, 'logs', "phase\#{PHASE}", "week\#{WEEK_FORMATTED}.md")
+
+    # Check if project directory exists
+    unless Dir.exist?(PROJECT_DIR)
+      puts "Error: Project directory not found at \#{PROJECT_DIR}"
+      puts "Please make sure you've initialized this day with ccstart."
+      exit 1
+    end
+
+    # Check if README exists
+    README_PATH = File.join(PROJECT_DIR, 'README.md')
+    unless File.exist?(README_PATH)
+      puts "Error: README.md not found in \#{PROJECT_DIR}"
+      puts "Please make sure you've initialized this day with ccstart."
+      exit 1
+    end
+
+    # Read README content
+    readme_content = File.read(README_PATH)
+    
+    # Create log directory if needed
+    log_dir = File.dirname(LOG_FILE)
+    FileUtils.mkdir_p(log_dir) unless Dir.exist?(log_dir)
+
+    # Check if log file exists, create if not
+    unless File.exist?(LOG_FILE)
+      puts "Creating new log file: \#{LOG_FILE}"
+      week_start = ((WEEK_IN_PHASE - 1) * 6) + 1
+      week_end = WEEK_IN_PHASE * 6
+      
+      File.open(LOG_FILE, 'w') do |f|
+        f.puts "# Week \#{WEEK_FORMATTED} (Days \#{week_start}-\#{week_end})"
+        f.puts ""
+        f.puts "## Week Overview"
+        f.puts "- **Focus**: "
+        f.puts "- **Launch School Connection**: "
+        f.puts "- **Weekly Goals**:"
+        f.puts "  - "
+        f.puts "  - "
+        f.puts "  - "
+        f.puts ""
+        f.puts "## Daily Logs"
+        f.puts ""
+      end
+    end
+
+    # Check if day entry already exists
+    log_content = File.read(LOG_FILE)
+    day_entry_pattern = /^## Day \#{LOG_DAY}$/
+
+    if log_content.match(day_entry_pattern)
+      puts "Warning: An entry for Day \#{LOG_DAY} already exists in the log file."
+      print "Do you want to replace it? (y/n): "
+      replace_entry = STDIN.gets.chomp.downcase
+      
+      if replace_entry != 'y'
+        puts "Operation canceled."
+        exit 0
       end
       
-      # Calculate phase, week based on the day to log
-      PHASE = ((LOG_DAY - 1) / 100) + 1
-      WEEK_IN_PHASE = (((LOG_DAY - 1) % 100) / 6) + 1
+      # Remove existing entry
+      lines = log_content.split("\\n")
+      start_index = lines.find_index { |line| line.match(day_entry_pattern) }
       
-      # Format week with leading zero
-      WEEK_FORMATTED = format('%02d', WEEK_IN_PHASE)
-      
-      # Set phase directory
-      PHASE_DIRS = {
-        1 => "phase1_ruby",
-        2 => "phase2_python",
-        3 => "phase3_javascript",
-        4 => "phase4_fullstack",
-        5 => "phase5_ml_finance"
-      }
-      
-      PHASE_DIR = PHASE_DIRS[PHASE]
-      
-      # Check if base directory exists
-      unless Dir.exist?(BASE_DIR)
-        puts "Error: Base project directory not found at \#{BASE_DIR}"
-        puts "Please run the setup script first."
-        exit 1
-      end
-      
-      # Set paths
-      PROJECT_DIR = File.join(BASE_DIR, PHASE_DIR, "week\#{WEEK_FORMATTED}", "day\#{LOG_DAY}")
-      LOG_FILE = File.join(BASE_DIR, 'logs', "phase\#{PHASE}", "week\#{WEEK_FORMATTED}.md")
-
-      # Check if project directory exists
-      unless Dir.exist?(PROJECT_DIR)
-        puts "Error: Project directory not found at \#{PROJECT_DIR}"
-        puts "Please make sure you've initialized this day with ccstart."
-        exit 1
-      end
-
-      # Check if README exists
-      README_PATH = File.join(PROJECT_DIR, 'README.md')
-      unless File.exist?(README_PATH)
-        puts "Error: README.md not found in \#{PROJECT_DIR}"
-        puts "Please make sure you've initialized this day with ccstart."
-        exit 1
-      end
-
-      # Read README content
-      readme_content = File.read(README_PATH)
-      
-      # Create log directory if needed
-      log_dir = File.dirname(LOG_FILE)
-      FileUtils.mkdir_p(log_dir) unless Dir.exist?(log_dir)
-
-      # Check if log file exists, create if not
-      unless File.exist?(LOG_FILE)
-        puts "Creating new log file: \#{LOG_FILE}"
-        week_start = ((WEEK_IN_PHASE - 1) * 6) + 1
-        week_end = WEEK_IN_PHASE * 6
+      if start_index
+        # Find the end of this entry (next day entry or end of file)
+        end_index = lines[start_index+1..-1].find_index { |line| line.match(/^## Day \\d+$/) }
         
-        File.open(LOG_FILE, 'w') do |f|
-          f.puts "# Week \#{WEEK_FORMATTED} (Days \#{week_start}-\#{week_end})"
-          f.puts ""
-          f.puts "## Week Overview"
-          f.puts "- **Focus**: "
-          f.puts "- **Launch School Connection**: "
-          f.puts "- **Weekly Goals**:"
-          f.puts "  - "
-          f.puts "  - "
-          f.puts "  - "
-          f.puts ""
-          f.puts "## Daily Logs"
-          f.puts ""
-        end
-      end
-
-      # Check if day entry already exists
-      log_content = File.read(LOG_FILE)
-      day_entry_pattern = /^## Day \#{LOG_DAY}$/
-
-      if log_content.match(day_entry_pattern)
-        puts "Warning: An entry for Day \#{LOG_DAY} already exists in the log file."
-        print "Do you want to replace it? (y/n): "
-        replace_entry = STDIN.gets.chomp.downcase
-        
-        if replace_entry != 'y'
-          puts "Operation canceled."
-          exit 0
+        if end_index
+          end_index += start_index + 1 # Adjust for the slice from start_index+1
+        else
+          end_index = lines.length
         end
         
-        # Remove existing entry
-        lines = log_content.split("\n")
-        start_index = lines.find_index { |line| line.match(day_entry_pattern) }
+        # Remove the entry
+        lines.slice!(start_index...end_index)
         
-        if start_index
-          # Find the end of this entry (next day entry or end of file)
-          end_index = lines[start_index+1..-1].find_index { |line| line.match(/^## Day \d+$/) }
-          
-          if end_index
-            end_index += start_index + 1 # Adjust for the slice from start_index+1
-          else
-            end_index = lines.length
-          end
-          
-          # Remove the entry
-          lines.slice!(start_index...end_index)
-          
-          # Write updated content back
-          File.write(LOG_FILE, lines.join("\n"))
-          puts "Removed existing entry for Day \#{LOG_DAY}"
-        end
+        # Write updated content back
+        File.write(LOG_FILE, lines.join("\\n"))
+        puts "Removed existing entry for Day \#{LOG_DAY}"
       end
+    end
 
-      # Find the right spot to insert the new entry (entries should be in chronological order)
-      lines = File.readlines(LOG_FILE, chomp: true)
-      day_entries = lines.each_with_index.select { |line, _| line.match(/^## Day \d+$/) }
-      
-      insert_index = nil
-      inserted = false
-      
-      day_entries.each do |entry, index|
-        entry_day = entry.match(/^## Day (\d+)$/)[1].to_i
-        if LOG_DAY < entry_day
-          insert_index = index
-          inserted = true
-          break
-        end
+    # Find the right spot to insert the new entry (entries should be in chronological order)
+    lines = File.readlines(LOG_FILE, chomp: true)
+    day_entries = lines.each_with_index.select { |line, _| line.match(/^## Day \\d+$/) }
+    
+    insert_index = nil
+    inserted = false
+    
+    day_entries.each do |entry, index|
+      entry_day = entry.match(/^## Day (\\d+)$/)[1].to_i
+      if LOG_DAY < entry_day
+        insert_index = index
+        inserted = true
+        break
       end
-      
-      if inserted
-        # Insert at the appropriate spot
-        day_entry = "## Day \#{LOG_DAY}"
-        lines.insert(insert_index, day_entry)
-      else
-        # Append to the end
-        day_entry = "## Day \#{LOG_DAY}"
-        # Find the last daily log entry or the Daily Logs header
-        last_entry_index = day_entries.empty? ? 
-          lines.find_index { |line| line.match(/^## Daily Logs$/) } : 
-          day_entries.last[1]
-          
-        if last_entry_index
-          # Find the next section after the last entry
-          next_section_index = lines[last_entry_index+1..-1].find_index { |line| line.match(/^## /) }
-          
-          if next_section_index
-            insert_index = last_entry_index + 1 + next_section_index
-            lines.insert(insert_index, "", day_entry)
-          else
-            lines << "" << day_entry
-          end
+    end
+    
+    if inserted
+      # Insert at the appropriate spot
+      day_entry = "## Day \#{LOG_DAY}"
+      lines.insert(insert_index, day_entry)
+    else
+      # Append to the end
+      day_entry = "## Day \#{LOG_DAY}"
+      # Find the last daily log entry or the Daily Logs header
+      last_entry_index = day_entries.empty? ? 
+        lines.find_index { |line| line.match(/^## Daily Logs$/) } : 
+        day_entries.last[1]
+        
+      if last_entry_index
+        # Find the next section after the last entry
+        next_section_index = lines[last_entry_index+1..-1].find_index { |line| line.match(/^## /) }
+        
+        if next_section_index
+          insert_index = last_entry_index + 1 + next_section_index
+          lines.insert(insert_index, "", day_entry)
         else
           lines << "" << day_entry
         end
-      end
-      
-      # Extract sections from README
-      focus_section = extract_section(readme_content, "Today's Focus", "Launch School Connection")
-      ls_section = extract_section(readme_content, "Launch School Connection", "Progress Log")
-      progress_section = extract_section(readme_content, "Progress Log", "Reflections")
-      reflections_section = extract_section(readme_content, "Reflections", nil)
-      
-      # Find the index right after the day entry
-      day_index = lines.find_index { |line| line == day_entry }
-      
-      if day_index
-        # Insert content after the day entry
-        current_index = day_index + 1
-        
-        # Add focus section
-        focus_lines = focus_section.split("\n")
-        lines.insert(current_index, *focus_lines)
-        current_index += focus_lines.length
-        
-        # Add LS section
-        ls_lines = ls_section.split("\n")
-        lines.insert(current_index, *ls_lines)
-        current_index += ls_lines.length
-        
-        # Add progress section
-        progress_lines = progress_section.split("\n")
-        lines.insert(current_index, *progress_lines)
-        current_index += progress_lines.length
-        
-        # Add reflections section
-        lines.insert(current_index, "### Reflections")
-        reflections_lines = reflections_section.split("\n")
-        lines.insert(current_index + 1, *reflections_lines)
-        current_index += reflections_lines.length + 1
-        
-        # Add blank line
-        lines.insert(current_index, "")
-      end
-      
-      # Write updated content
-      File.write(LOG_FILE, lines.join("\n"))
-      
-      puts "Progress for Day \#{LOG_DAY} successfully logged to \#{LOG_FILE}"
-
-      # Helper method to extract section from README
-      def extract_section(content, section_start, section_end)
-        pattern_start = "## \#{section_start}"
-        pattern_end = section_end ? "## \#{section_end}" : nil
-        
-        start_index = content.index(pattern_start)
-        return "" unless start_index
-        
-        if pattern_end
-          end_index = content.index(pattern_end, start_index)
-          return "" unless end_index
-          
-          section = content[start_index...end_index]
-        else
-          section = content[start_index..-1]
-        end
-        
-        # Remove the header itself
-        section = section.sub(pattern_start, "").strip
-        
-        # Return the section
-        section
-      end
-    RUBY
-  end
-
-  # Generate push updates script
-  def generate_cc_push_updates
-    <<~RUBY
-      #!/usr/bin/env ruby
-      # frozen_string_literal: true
-      
-      # 6/7 Coding Challenge - Push Updates Script
-      # Commits changes and increments the day counter
-      
-      require 'fileutils'
-      
-      # Constants
-      HOME_DIR = ENV['HOME']
-      BASE_DIR = File.join(HOME_DIR, 'projects', '6-7-coding-challenge')
-      DAY_COUNTER = File.join(HOME_DIR, '.cc-current-day')
-      
-      # Check if day counter exists
-      unless File.exist?(DAY_COUNTER)
-        puts "Error: Day counter file not found. Run setup script first."
-        exit 1
-      end
-      
-      # Get current day
-      CURRENT_DAY = File.read(DAY_COUNTER).strip.to_i
-      
-      # Check if base directory exists
-      unless Dir.exist?(BASE_DIR)
-        puts "Error: Base project directory not found at \#{BASE_DIR}"
-        puts "Please run the setup script first."
-        exit 1
-      end
-      
-      # Check if it's a git repository
-      unless Dir.exist?(File.join(BASE_DIR, '.git'))
-        puts "Error: Not a git repository. Please init git first."
-        puts "cd \#{BASE_DIR} && git init"
-        exit 1
-      end
-      
-      # Move to the repository directory
-      Dir.chdir(BASE_DIR)
-      
-      # Check if there are any changes to commit
-      if system("git diff --quiet && git diff --staged --quiet")
-        puts "No changes to commit. Have you made any progress today?"
-        print "Proceed anyway? (y/n): "
-        proceed = STDIN.gets.chomp.downcase
-        
-        if proceed != 'y'
-          puts "Operation canceled."
-          exit 0
-        end
-      end
-      
-      # Get commit message with date
-      commit_date = Time.now.strftime("%Y-%m-%d")
-      commit_msg = "Day \#{CURRENT_DAY}: \#{commit_date}"
-      
-      # Additional commit details
-      PHASE = ((CURRENT_DAY - 1) / 100) + 1
-      WEEK_IN_PHASE = (((CURRENT_DAY - 1) % 100) / 6) + 1
-      WEEK_FORMATTED = format('%02d', WEEK_IN_PHASE)
-      
-      # Determine phase name
-      PHASE_NAMES = {
-        1 => "Ruby Backend",
-        2 => "Python Data Analysis",
-        3 => "JavaScript Frontend",
-        4 => "Full-Stack Projects",
-        5 => "ML Finance Applications"
-      }
-      
-      PHASE_NAME = PHASE_NAMES[PHASE] || "Unknown Phase"
-      
-      # Add project directory info to commit message
-      PHASE_DIRS = {
-        1 => "phase1_ruby",
-        2 => "phase2_python",
-        3 => "phase3_javascript",
-        4 => "phase4_fullstack",
-        5 => "phase5_ml_finance"
-      }
-      
-      PHASE_DIR = PHASE_DIRS[PHASE]
-      PROJECT_DIR = File.join(BASE_DIR, PHASE_DIR, "week\#{WEEK_FORMATTED}", "day\#{CURRENT_DAY}")
-      
-      if Dir.exist?(PROJECT_DIR)
-        # Extract focus from README
-        readme_path = File.join(PROJECT_DIR, 'README.md')
-        
-        if File.exist?(readme_path)
-          readme_content = File.read(readme_path)
-          primary_goal_match = readme_content.match(/Primary goal: (.+)/)
-          
-          if primary_goal_match
-            primary_goal = primary_goal_match[1].strip
-            commit_msg = "\#{commit_msg} - \#{primary_goal}"
-          end
-        end
-      end
-      
-      # Add files to git
-      puts "Adding files to git..."
-      system("git add .")
-      
-      # Commit changes
-      puts "Committing changes with message: \#{commit_msg}"
-      system("git commit -m \"\#{commit_msg}\"")
-      
-      # Check if remote exists
-      if system("git remote -v | grep -q origin")
-        puts "Pushing to remote repository..."
-        system("git push origin main")
       else
-        puts "Warning: No remote 'origin' found. Set up a remote to push your progress."
-        puts "git remote add origin YOUR_REPOSITORY_URL"
+        lines << "" << day_entry
       end
-      
-      # Increment day counter
-      puts "Incrementing day counter from \#{CURRENT_DAY} to \#{CURRENT_DAY + 1}..."
-      File.write(DAY_COUNTER, (CURRENT_DAY + 1).to_s)
-      
-      # Success message
-      puts "===================="
-      puts "Updates successfully pushed and day counter incremented"
-      puts "Current progress: Day \#{CURRENT_DAY}/500 completed (\#{((CURRENT_DAY - 1) * 100 / 500)}%)"
-      puts "Phase \#{PHASE}: \#{PHASE_NAME}"
-      puts "Tomorrow is Day \#{CURRENT_DAY + 1}"
-      puts "===================="
-    RUBY
-  end
-
-  # Generate status script
-  def generate_cc_status
-    <<~RUBY
-      #!/usr/bin/env ruby
-      # frozen_string_literal: true
-      
-      # 6/7 Coding Challenge - Status Script
-      # Displays challenge progress and statistics
-      
-      require 'date'
-      
-      # Constants
-      HOME_DIR = ENV['HOME']
-      BASE_DIR = File.join(HOME_DIR, 'projects', '6-7-coding-challenge')
-      DAY_COUNTER = File.join(HOME_DIR, '.cc-current-day')
-      
-      # Check if day counter exists
-      unless File.exist?(DAY_COUNTER)
-        puts "Error: Day counter file not found. Run setup script first."
-        exit 1
-      end
-      
-      # Get current day
-      CURRENT_DAY = File.read(DAY_COUNTER).strip.to_i
-      
-      # Calculate progress metrics
-      TOTAL_DAYS = 500
-      DAYS_REMAINING = TOTAL_DAYS - CURRENT_DAY + 1
-      PERCENT_COMPLETE = ((CURRENT_DAY - 1) * 100 / TOTAL_DAYS)
-      
-      PHASE = ((CURRENT_DAY - 1) / 100) + 1
-      WEEK_IN_PHASE = (((CURRENT_DAY - 1) % 100) / 6) + 1
-      DAY_IN_WEEK = ((CURRENT_DAY - 1) % 6) + 1
-      WEEK_OVERALL = ((CURRENT_DAY - 1) / 6) + 1
-      
-      # Determine phase name
-      PHASE_NAMES = {
-        1 => "Ruby Backend",
-        2 => "Python Data Analysis",
-        3 => "JavaScript Frontend",
-        4 => "Full-Stack Projects",
-        5 => "ML Finance Applications"
-      }
-      
-      PHASE_NAME = PHASE_NAMES[PHASE] || "Unknown Phase"
-      
-      # Calculate completion date
-      begin
-        completion_date = Date.today + DAYS_REMAINING
-        COMPLETION_DATE = completion_date.strftime("%Y-%m-%d")
-      rescue
-        COMPLETION_DATE = "Unknown (date calculation error)"
-      end
-      
-      # Calculate schedule status
-      START_DATE = Date.new(2025, 4, 1) # Challenge start date
-      CURRENT_DATE = Date.today
-      
-      begin
-        days_elapsed = (CURRENT_DATE - START_DATE).to_i
-        
-        # Adjust for Sundays (don't count them in the challenge)
-        weeks_elapsed = days_elapsed / 7
-        sundays_elapsed = weeks_elapsed
-        actual_days_elapsed = days_elapsed - sundays_elapsed
-        
-        # Calculate expected day vs actual day
-        expected_day = actual_days_elapsed + 1
-        day_difference = CURRENT_DAY - expected_day
-        
-        if day_difference > 0
-          DAY_STATUS = "Ahead of schedule by \#{day_difference} day(s)"
-        elsif day_difference < 0
-          DAY_STATUS = "Behind schedule by \#{-day_difference} day(s)"
-        else
-          DAY_STATUS = "On schedule"
-        end
-        
-        DAYS_ELAPSED = actual_days_elapsed
-      rescue
-        DAYS_ELAPSED = "Unknown"
-        DAY_STATUS = "Status calculation not supported"
-      end
-      
-      # Console colors
-      if STDOUT.tty?
-        BOLD = "\e[1m"
-        GREEN = "\e[32m"
-        YELLOW = "\e[33m"
-        BLUE = "\e[34m"
-        MAGENTA = "\e[35m"
-        CYAN = "\e[36m"
-        RESET = "\e[0m"
-      else
-        BOLD = ""
-        GREEN = ""
-        YELLOW = ""
-        BLUE = ""
-        MAGENTA = ""
-        CYAN = ""
-        RESET = ""
-      end
-      
-      # Print status with colorized output
-      puts "\#{BOLD}╔═══════════════════════════════════════════════════╗\#{RESET}"
-      puts "\#{BOLD}║            6/7 CODING CHALLENGE STATUS             ║\#{RESET}"
-      puts "\#{BOLD}╠═══════════════════════════════════════════════════╣\#{RESET}"
-      printf "\#{BOLD}║\#{RESET} \#{GREEN}Current Day:\#{RESET} %-37s \#{BOLD}║\#{RESET}\\n", "\#{CURRENT_DAY}/500"
-      printf "\#{BOLD}║\#{RESET} \#{BLUE}Phase:\#{RESET} %-43s \#{BOLD}║\#{RESET}\\n", "\#{PHASE} of 5 - \#{PHASE_NAME}"
-      printf "\#{BOLD}║\#{RESET} \#{MAGENTA}Week:\#{RESET} %-44s \#{BOLD}║\#{RESET}\\n", "\#{WEEK_OVERALL} overall (Week \#{WEEK_IN_PHASE} in Phase \#{PHASE})"
-      printf "\#{BOLD}║\#{RESET} \#{CYAN}Day of Week:\#{RESET} %-37s \#{BOLD}║\#{RESET}\\n", "\#{DAY_IN_WEEK}/6"
-      printf "\#{BOLD}║\#{RESET} \#{YELLOW}Progress:\#{RESET} %-40s \#{BOLD}║\#{RESET}\\n", "\#{PERCENT_COMPLETE}% complete"
-      printf "\#{BOLD}║\#{RESET} \#{GREEN}Days Elapsed:\#{RESET} %-35s \#{BOLD}║\#{RESET}\\n", "\#{DAYS_ELAPSED}"
-      printf "\#{BOLD}║\#{RESET} \#{GREEN}Schedule Status:\#{RESET} %-32s \#{BOLD}║\#{RESET}\\n", "\#{DAY_STATUS}"
-      printf "\#{BOLD}║\#{RESET} \#{BLUE}Days Remaining:\#{RESET} %-34s \#{BOLD}║\#{RESET}\\n", "\#{DAYS_REMAINING}"
-      printf "\#{BOLD}║\#{RESET} \#{MAGENTA}Estimated Completion:\#{RESET} %-29s \#{BOLD}║\#{RESET}\\n", "\#{COMPLETION_DATE}"
-      
-      # Calculate and display streaks
-      if Dir.exist?(File.join(BASE_DIR, '.git'))
-        Dir.chdir(BASE_DIR)
-        current_streak = 0
-        
-        begin
-          yesterday = Date.today - 1
-          
-          while true
-            yesterday_str = yesterday.strftime("%Y-%m-%d")
-            has_commit = system("git log --since=\"\#{yesterday_str}\" --until=\"\#{yesterday_str} 23:59:59\" --pretty=format:%H | grep -q .", out: File::NULL, err: File::NULL)
-            
-            break unless has_commit
-            
-            current_streak += 1
-            yesterday = yesterday - 1
-            
-            # Skip Sundays in streak calculation
-            if yesterday.cwday == 7
-              yesterday = yesterday - 1
-            end
-          end
-          
-          printf "\#{BOLD}║\#{RESET} \#{CYAN}Current Streak:\#{RESET} %-34s \#{BOLD}║\#{RESET}\\n", "\#{current_streak} day(s)"
-        rescue
-          # Ignore streak calculation errors
-        end
-      end
-      
-      # Add repository information
-      if Dir.exist?(File.join(BASE_DIR, '.git'))
-        Dir.chdir(BASE_DIR)
-        
-        branch = `git branch --show-current 2>/dev/null`.strip
-        branch = "Unknown" if branch.empty?
-        
-        last_commit = `git log -1 --pretty=format:"%h - %s" 2>/dev/null`.strip
-        last_commit = "No commits yet" if last_commit.empty?
-        
-        last_commit_date = `git log -1 --pretty=format:"%cd" --date=short 2>/dev/null`.strip
-        last_commit_date = "N/A" if last_commit_date.empty?
-        
-        puts "\#{BOLD}╠═══════════════════════════════════════════════════╣\#{RESET}"
-        printf "\#{BOLD}║\#{RESET} \#{YELLOW}Active Branch:\#{RESET} %-35s \#{BOLD}║\#{RESET}\\n", "\#{branch}"
-        printf "\#{BOLD}║\#{RESET} \#{GREEN}Last Commit:\#{RESET} %-37s \#{BOLD}║\#{RESET}\\n", "\#{last_commit}"
-        printf "\#{BOLD}║\#{RESET} \#{BLUE}Commit Date:\#{RESET} %-36s \#{BOLD}║\#{RESET}\\n", "\#{last_commit_date}"
-      end
-      
-      puts "\#{BOLD}╚═══════════════════════════════════════════════════╝\#{RESET}"
-    RUBY
-  end
-
-  # Generate update script
-  def generate_cc_update
-    <<~RUBY
-      #!/usr/bin/env ruby
-      # frozen_string_literal: true
-      
-      # 6/7 Coding Challenge - Update Script
-      # Updates scripts to the latest version
-      
-      # This script simply calls the installer with the update option
-      installer_path = File.join(ENV['HOME'], 'bin', 'cc-installer.rb')
-      
-      # Check if the installer exists
-      unless File.exist?(installer_path)
-        puts "Error: Installer not found at \#{installer_path}"
-        puts "Please run cc-installer.rb with --update option manually."
-        exit 1
-      end
-      
-      # Execute the installer with the update option
-      puts "Running the installer with the update option..."
-      exec "ruby \#{installer_path} --update"
-    RUBY
-  end
-
-  # Generate uninstall script
-  def generate_cc_uninstall
-    <<~RUBY
-      #!/usr/bin/env ruby
-      # frozen_string_literal: true
-      
-      # 6/7 Coding Challenge - Uninstall Script
-      # Removes scripts and configuration
-      
-      # This script simply calls the installer with the uninstall option
-      installer_path = File.join(ENV['HOME'], 'bin', 'cc-installer.rb')
-      
-      # Check if the installer exists
-      unless File.exist?(installer_path)
-        puts "Error: Installer not found at \#{installer_path}"
-        puts "Please run cc-installer.rb with --uninstall option manually."
-        exit 1
-      end
-      
-      # Execute the installer with the uninstall option
-      puts "Running the installer with the uninstall option..."
-      exec "ruby \#{installer_path} --uninstall"
-    RUBY
-  end
-
-  # Helper methods
-  def command_exists?(command)
-    system("which #{command} > /dev/null 2>&1")
-  end
-
-  def scripts_installed?
-    SCRIPTS.keys.all? do |script|
-      File.exist?(File.join(BIN_DIR, script))
     end
-  end
-
-  def aliases_installed?
-    return false unless File.exist?(ZSHRC_FILE)
-    File.read(ZSHRC_FILE).include?(ALIASES_MARKER)
-  end
-
-  # Console output formatting helpers
-  def puts_header(message)
-    puts "\n=== #{message} ==="
-  end
-
-  def puts_success(message)
-    puts "✓ #{message}"
-  end
-
-  def puts_warning(message)
-    puts "⚠ #{message}"
-  end
-
-  def puts_error(message)
-    puts "✗ #{message}"
-  end
-
-  def puts_info(message)
-    puts "ℹ #{message}"
-  end
+    
+    # Extract sections from README
+    focus_section = extract_section(readme_content, "Today's Focus", "Launch School Connection")
+    ls_section = extract_section(readme_content, "Launch School Connection", "Progress Log")
+    progress_section = extract_section(readme_content, "Progress Log", "Reflections")
+    reflections_section = extract_section(readme_content, "Reflections", nil)
+    
+    # Find the index right after the day entry
+    day_index = lines.find_index { |line| line == day_entry }
+    
+    if day_index
+      # Insert content after the day entry
+      current_index = day_index + 1
+      
+      # Add focus section
+      focus_lines = focus_section.split("\\n")
+      lines.insert(current_index, *focus_lines)
+      current_index += focus_lines.length
+      
+      # Add LS section
+      ls_lines = ls_section.split("\\n")
+      lines.insert(current_index, *ls_lines)
+      current_index += ls_lines.length
+      
+      # Add progress section
+      progress_lines = progress_section.split("\\n")
+      lines.insert(current_index, *progress_lines)
+      current_index += progress_lines.length
+      
+      # Add reflections section
+      lines.insert(current_index, "### Reflections")
+      reflections_lines = reflections_section.split("\\n")
+      lines.insert(current_index + 1, *reflections_lines)
+      current_index += reflections_lines.length + 1
+      
+      # Add blank line
+      lines.insert(current_index, "")
+    end
+    
+    # Write updated content
+    File.write(LOG_FILE, lines.join("\\n"))
+    
+    puts "Progress for Day \#{LOG_DAY} successfully logged to \#{LOG_FILE}"
+  RUBY
 end
-
-# Run the installer if executed directly
-if __FILE__ == $PROGRAM_NAME
-  CodingChallengeInstaller.new.run
 end
