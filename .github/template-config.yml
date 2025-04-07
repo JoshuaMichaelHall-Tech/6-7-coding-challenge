@@ -1,0 +1,22 @@
+# GitHub Template Configuration 
+
+# Specify whether this repository should be available as a template
+is_template: true
+
+# Template repository settings
+template:
+  # When a repository is created from this template, the user will be directed to this file
+  readme: "TEMPLATE_README.md"
+  
+  # Define the default branch for repositories created from this template
+  default_branch: "main"
+  
+  # List of files to exclude when a repository is generated from this template
+  exclude:
+    - ".github/workflows/ci.yml"
+    - "CONTRIBUTING.md"
+    - "LICENSE.txt"
+    - ".github/template-config.yml"
+
+  # Template description shown on GitHub
+  description: "A personalized commitment to code for 500 days, six days a week, while honoring the Sabbath."
