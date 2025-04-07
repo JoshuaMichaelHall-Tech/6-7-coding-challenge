@@ -14,7 +14,7 @@ mkdir -p ~/bin
 cp scripts/cc-installer.rb ~/bin/
 chmod +x ~/bin/cc-installer.rb
 
-# Run the installer
+# Run the installer (interactive)
 ruby ~/bin/cc-installer.rb
 
 # Source your .zshrc or restart your terminal
@@ -64,6 +64,7 @@ After installation, these commands will be available:
 | `cclog`    | Record your progress in the weekly log                |
 | `ccpush`   | Commit changes and increment the day counter          |
 | `ccstatus` | Show your overall challenge progress                  |
+| `ccconfig` | View or modify your configuration                     |
 | `ccupdate` | Update scripts to the latest version                  |
 | `ccuninstall` | Remove scripts and configuration                   |
 
@@ -84,6 +85,36 @@ After installation, these commands will be available:
 Optional but recommended:
 - **tmux**: For terminal session management
 - **neovim** or **vim**: For editing files
+
+## New Feature: Customization
+
+You can now customize the 6/7 Coding Challenge to your preferences:
+
+```zsh
+# View current configuration
+ccconfig
+
+# Update configuration interactively
+ccconfig --interactive
+
+# Set a specific configuration value
+ccconfig --set user.github_username=yourusername
+ccconfig --set preferences.editor=vim
+```
+
+### Configuration Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `user.name` | Your name | System username |
+| `user.github_username` | GitHub username | (empty) |
+| `user.github_email` | Email for git commits | (empty) |
+| `paths.base_dir` | Project directory | `~/projects/6-7-coding-challenge` |
+| `paths.bin_dir` | Scripts directory | `~/bin` |
+| `preferences.editor` | Preferred text editor | (auto-detected) |
+| `preferences.use_tmux` | Whether to use tmux | `true` if installed |
+| `preferences.auto_push` | Auto-push to GitHub | `true` |
+| `preferences.display_colors` | Show colorized output | `true` |
 
 ## New Feature: Retroactive Logging
 
@@ -122,6 +153,9 @@ ccuninstall
 
 # Verbose output for troubleshooting
 ruby ~/bin/cc-installer.rb --verbose
+
+# Non-interactive mode (for automated setup)
+ruby ~/bin/cc-installer.rb --non-interactive
 ```
 
 ## Project Philosophy
@@ -141,7 +175,18 @@ See these documentation files for more details:
 
 - [About The Challenge](ABOUT.md): Philosophy and motivation
 - [Getting Started Guide](docs/getting-started.md): Detailed setup instructions
+- [Customization Guide](docs/CUSTOMIZATION.md): How to tailor the challenge to your needs
 - [Scripts Documentation](scripts/README.md): Description of all scripts
+
+## Creating Your Own Challenge
+
+To create your own 6/7 Coding Challenge:
+
+1. Use this repository as a template on GitHub
+2. Clone your new repository
+3. Follow the installation instructions above
+4. Customize the configuration to match your preferences
+5. Start your journey with `ccstart`
 
 ## Acknowledgements
 
