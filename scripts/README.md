@@ -1,79 +1,225 @@
 # 6/7 Coding Challenge Scripts
 
-This directory contains the Ruby installer that powers the 6/7 Coding Challenge. The installer generates all required scripts for the challenge workflow.
+This directory contains the Ruby scripts that power the 6/7 Coding Challenge. These scripts have been completely rewritten in version 3.0.0 to support configuration flexibility, allowing users to customize the challenge to their needs.
 
 ## Script Overview
 
 | Script | Description |
 |--------|-------------|
-| `cc-installer.rb` | Main Ruby installer that generates all other scripts |
-
-## Installation
-
-1. Clone the repository:
-   ```zsh
-   git clone https://github.com/joshuamichaelhall-tech/6-7-coding-challenge.git
-   cd 6-7-coding-challenge
-   ```
-
-2. Install the Ruby installer script:
-   ```zsh
-   mkdir -p ~/bin
-   cp scripts/cc-installer.rb ~/bin/
-   chmod +x ~/bin/cc-installer.rb
-   ```
-
-3. Run the installer:
-   ```zsh
-   ruby ~/bin/cc-installer.rb
-   ```
-
-4. Source your `.zshrc` or restart your terminal:
-   ```zsh
-   source ~/.zshrc
-   ```
-
-## Maintenance
-
-To update or modify any scripts:
-
-1. Edit the script-generating methods in `cc-installer.rb`
-2. Run the installer to regenerate all scripts:
-   ```zsh
-   ruby ~/bin/cc-installer.rb --update
-   ```
-
-This approach centralizes all maintenance to a single file while still benefiting from the improved reliability of Ruby scripts.
-
-## Generated Scripts
-
-The installer creates the following scripts in your `~/bin` directory:
-
-| Script | Description |
-|--------|-------------|
+| `cc-installer.rb` | Main installer that generates all other scripts |
 | `cc-start-day.rb` | Initializes the environment for a new challenge day |
-| `cc-log-progress.rb` | Records the day's progress in the weekly log file |
-| `cc-push-updates.rb` | Commits and pushes changes, increments the day counter |
-| `cc-status.rb` | Displays the current challenge status and progress |
+| `cc-log-progress.rb` | Records progress in weekly log files |
+| `cc-push-updates.rb` | Commits changes, pushes to remote, and increments the day counter |
+| `cc-status.rb` | Displays challenge progress and statistics |
+| `cc-config.rb` | Views and modifies configuration settings |
 | `cc-update.rb` | Updates scripts to the latest version |
 | `cc-uninstall.rb` | Removes scripts and configuration |
 
-## Daily Workflow
+## Configuration System
 
-After installation, use these commands:
+All scripts now use a shared configuration system through the `lib/cc_config.rb` module. This provides:
 
-1. `ccstart` - Start your day's coding session
-2. `cclog` - Log your progress
-3. `ccpush` - Commit changes and increment day counter
-4. `ccstatus` - Check your overall progress
+- Consistent access to user preferences
+- Flexible path handling
+- Customizable challenge structure
+- Theme and display options
 
-## Retroactive Logging
+## Installation
 
-The scripts support logging for previous days:
+The recommended way to install these scripts is:
 
-```zsh
-# Log a specific previous day
-cclog 5  # Logs day 5 specifically
+```bash
+# 1. Make the installer executable
+chmod +x cc-installer.rb
+
+# 2. Move it to your bin directory
+mkdir -p ~/bin
+cp cc-installer.rb ~/bin/
+
+# 3. Run the installer
+ruby ~/bin/cc-installer.rb
 ```
 
-This centralized approach simplifies maintenance while preserving all the functionality needed for your 500-day coding journey.
+The installer will:
+- Create necessary directories
+- Install all scripts
+- Set up configurations
+- Add aliases to your `.zshrc`
+
+## Command Usage
+
+After installation, the following commands will be available:
+
+### ccstart
+
+Initializes the environment for the current day.
+
+```bash
+# Standard usage
+ccstart
+
+# Options are handled through configuration
+```
+
+### cclog
+
+Records progress in weekly log files.
+
+```bash
+# Log the current day
+cclog
+
+# Log a specific day
+cclog 5
+
+# Usage with custom configuration doesn't require additional flags
+```
+
+### ccpush
+
+Commits changes and increments the day counter.
+
+```bash
+# Standard usage
+ccpush
+
+# Auto-push behavior is controlled via configuration
+```
+
+### ccstatus
+
+Displays challenge progress and statistics.
+
+```bash
+# Standard usage
+ccstatus
+
+# Display output is controlled via configuration
+```
+
+### ccconfig
+
+Views and modifies configuration settings.
+
+```bash
+# View current configuration
+ccconfig
+
+# Update configuration interactively
+ccconfig --interactive
+
+# Set a specific value
+ccconfig --set user.name="Your Name"
+ccconfig --set paths.base_dir=~/my-custom-location
+
+# Reset to defaults
+ccconfig --reset
+```
+
+### ccupdate
+
+Updates scripts to the latest version.
+
+```bash
+# Standard usage
+ccupdate
+
+# Force update
+ccupdate --force
+```
+
+### ccuninstall
+
+Removes scripts and configuration.
+
+```bash
+# Standard usage
+ccuninstall
+
+# Force uninstall without prompts
+ccuninstall --force
+```
+
+## Development and Customization
+
+### Adding New Functionality
+
+To add new functionality:
+
+1. Create a new script in this directory
+2. Use the same code structure as existing scripts
+3. Include the configuration module
+4. Add an alias in the installer
+
+### Modifying Scripts
+
+To modify existing scripts:
+
+1. Edit the script file
+2. Run `ccupdate` to regenerate the installed versions
+3. Test your changes
+
+### Custom Configuration Parameters
+
+To add new configuration parameters:
+
+1. Edit `lib/cc_config.rb` to add your parameters to the `DEFAULT_CONFIG`
+2. Update relevant scripts to use the new parameters
+3. Update `cc-config.rb` to handle the new parameters in its interactive mode
+
+## Troubleshooting
+
+### Script Errors
+
+If you encounter errors:
+
+1. Run the script with more detail:
+   ```bash
+   ruby ~/bin/cc-script-name.rb --verbose
+   ```
+
+2. Check your configuration:
+   ```bash
+   ccconfig
+   ```
+
+3. Ensure your paths are correct:
+   ```bash
+   ccconfig --set paths.base_dir=/correct/path
+   ```
+
+### Installation Issues
+
+If installation fails:
+
+1. Check prerequisites:
+   ```bash
+   which ruby
+   which zsh
+   ```
+
+2. Try a fresh installation:
+   ```bash
+   ruby ~/bin/cc-installer.rb --install --force
+   ```
+
+3. Check for error messages in the output
+
+## Script Architecture
+
+These scripts follow a modular design:
+
+1. **Configuration Module**: Central place for settings
+2. **Installer**: Bootstraps the entire system
+3. **Daily Scripts**: Handle the regular workflow
+4. **Management Scripts**: Handle configuration and updates
+
+This design makes it easy to extend the system while maintaining consistency across all scripts.
+
+## Contributing
+
+If you improve these scripts, please consider contributing your changes back to the main project. See the [CONTRIBUTING.md](../CONTRIBUTING.md) file for guidance.
+
+---
+
+For more information on using these scripts, see the main [README.md](../README.md) and [CUSTOMIZATION.md](../CUSTOMIZATION.md) files.
