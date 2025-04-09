@@ -981,7 +981,7 @@ RUBY
         end
         
         CCConfig.save(config)
-        puts "Configuration updated: #{key_path} = #{value}"
+        puts_success "Configuration script created successfully"
         options[:view] = true
       end
       
@@ -994,48 +994,48 @@ RUBY
         
         # User info
         puts "\\nUser Information:"
-        print "Your name (#{config['user']['name']}): "
+        print "Your name (#{@config['user']['name']}): "
         name = gets.strip
-        config['user']['name'] = name unless name.empty?
+        @config['user']['name'] = name unless name.empty?
         
-        print "GitHub username (#{config['user']['github_username']}): "
+        print "GitHub username (#{@config['user']['github_username']}): "
         github_username = gets.strip
-        config['user']['github_username'] = github_username unless github_username.empty?
+        @config['user']['github_username'] = github_username unless github_username.empty?
         
-        print "GitHub email (#{config['user']['github_email']}): "
+        print "GitHub email (#{@config['user']['github_email']}): "
         github_email = gets.strip
-        config['user']['github_email'] = github_email unless github_email.empty?
+        @config['user']['github_email'] = github_email unless github_email.empty?
         
         # Paths
         puts "\\nDirectories:"
-        print "Base directory (#{config['paths']['base_dir']}): "
+        print "Base directory (#{@config['paths']['base_dir']}): "
         base_dir = gets.strip
-        config['paths']['base_dir'] = base_dir unless base_dir.empty?
+        @config['paths']['base_dir'] = base_dir unless base_dir.empty?
         
-        print "Scripts directory (#{config['paths']['bin_dir']}): "
+        print "Scripts directory (#{@config['paths']['bin_dir']}): "
         bin_dir = gets.strip
-        config['paths']['bin_dir'] = bin_dir unless bin_dir.empty?
+        @config['paths']['bin_dir'] = bin_dir unless bin_dir.empty?
         
         # Preferences
         puts "\\nPreferences:"
-        print "Preferred editor (#{config['preferences']['editor']}): "
+        print "Preferred editor (#{@config['preferences']['editor']}): "
         editor = gets.strip
-        config['preferences']['editor'] = editor unless editor.empty?
+        @config['preferences']['editor'] = editor unless editor.empty?
         
-        print "Use tmux? (#{config['preferences']['use_tmux'] ? 'yes' : 'no'}): "
+        print "Use tmux? (#{@config['preferences']['use_tmux'] ? 'yes' : 'no'}): "
         use_tmux = gets.strip.downcase
         if use_tmux == 'yes' || use_tmux == 'y'
-          config['preferences']['use_tmux'] = true
+          @config['preferences']['use_tmux'] = true
         elsif use_tmux == 'no' || use_tmux == 'n'
-          config['preferences']['use_tmux'] = false
+          @config['preferences']['use_tmux'] = false
         end
         
-        print "Auto push to GitHub? (#{config['preferences']['auto_push'] ? 'yes' : 'no'}): "
+        print "Auto push to GitHub? (#{@config['preferences']['auto_push'] ? 'yes' : 'no'}): "
         auto_push = gets.strip.downcase
         if auto_push == 'yes' || auto_push == 'y'
-          config['preferences']['auto_push'] = true
+          @config['preferences']['auto_push'] = true
         elsif auto_push == 'no' || auto_push == 'n'
-          config['preferences']['auto_push'] = false
+          @config['preferences']['auto_push'] = false
         end
         
         # Challenge structure
@@ -1044,29 +1044,29 @@ RUBY
         customize_structure = gets.strip.downcase == 'y'
         
         if customize_structure
-          print "Days per week (#{config['challenge']['days_per_week']}): "
+          print "Days per week (#{@config['challenge']['days_per_week']}): "
           days_per_week = gets.strip
-          config['challenge']['days_per_week'] = days_per_week.to_i unless days_per_week.empty?
+          @config['challenge']['days_per_week'] = days_per_week.to_i unless days_per_week.empty?
           
-          print "Days per phase (#{config['challenge']['days_per_phase']}): "
+          print "Days per phase (#{@config['challenge']['days_per_phase']}): "
           days_per_phase = gets.strip
-          config['challenge']['days_per_phase'] = days_per_phase.to_i unless days_per_phase.empty?
+          @config['challenge']['days_per_phase'] = days_per_phase.to_i unless days_per_phase.empty?
           
-          print "Total days (#{config['challenge']['total_days']}): "
+          print "Total days (#{@config['challenge']['total_days']}): "
           total_days = gets.strip
-          config['challenge']['total_days'] = total_days.to_i unless total_days.empty?
+          @config['challenge']['total_days'] = total_days.to_i unless total_days.empty?
           
           # Phase configuration
           puts "\\nPhase Names and Directories:"
-          config['challenge']['phases'].each do |phase_num, phase_info|
+          @config['challenge']['phases'].each do |phase_num, phase_info|
             puts "Phase #{phase_num}:"
             print "  Name (#{phase_info['name']}): "
             name = gets.strip
-            config['challenge']['phases'][phase_num]['name'] = name unless name.empty?
+            @config['challenge']['phases'][phase_num]['name'] = name unless name.empty?
             
             print "  Directory (#{phase_info['dir']}): "
             dir = gets.strip
-            config['challenge']['phases'][phase_num]['dir'] = dir unless dir.empty?
+            @config['challenge']['phases'][phase_num]['dir'] = dir unless dir.empty?
           end
         end
         
