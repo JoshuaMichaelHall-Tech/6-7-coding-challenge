@@ -4,14 +4,19 @@
 # 6/7 Coding Challenge - Uninstall Script
 # Removes all challenge scripts and configuration
 
+require 'fileutils'
+require_relative 'lib/cc_config'
+
+# Load configuration
+CONFIG = CCConfig.load
+
 # Constants
 HOME_DIR = ENV['HOME']
-BIN_DIR = File.join(HOME_DIR, 'bin')
-BASE_DIR = File.join(HOME_DIR, 'projects', '6-7-coding-challenge')
-CONFIG_FILE = File.join(HOME_DIR, '.cc-config')
+BIN_DIR = CCConfig.bin_dir
+BASE_DIR = CCConfig.base_dir
+CONFIG_FILE = File.join(HOME_DIR, '.cc-config.json')
 DAY_COUNTER = File.join(HOME_DIR, '.cc-current-day')
 ZSHRC_FILE = File.join(HOME_DIR, '.zshrc')
-INSTALLER_PATH = File.join(BIN_DIR, 'cc-installer.rb')
 
 # ANSI color codes
 RESET = "\e[0m"
@@ -21,52 +26,68 @@ YELLOW = "\e[33m"
 BLUE = "\e[34m"
 RED = "\e[31m"
 
-# Check if color should be disabled
-NO_COLOR = ENV['NO_COLOR'] || ARGV.include?('--no-color')
-
+# Helper for colorized output
 def colorize(text, color_code)
-  return text if NO_COLOR
+  return text unless CCConfig.use_colors?
   "#{color_code}#{text}#{RESET}"
 end
 
-# Check if installer exists and use it if available
-if File.exist?(INSTALLER_PATH)
-  args = ARGV + ['--uninstall']
-  command = "ruby #{INSTALLER_PATH} #{args.join(' ')}"
-  exec command
-end
+# Parse command line arguments
+require 'optparse'
 
-# If installer is not available, proceed with manual uninstallation
+options = {
+  force: false,
+  verbose: false
+}
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: ccuninstall [options]"
+  
+  opts.on("-f", "--force", "Force uninstall without prompts") do
+    options[:force] = true
+  end
+  
+  opts.on("-v", "--verbose", "Show verbose output") do
+    options[:verbose] = true
+  end
+end.parse!
+
+# Display header
 puts colorize("6/7 Coding Challenge Uninstaller", BOLD)
 puts "=" * 60
 puts
-puts colorize("WARNING: Installer script not found, proceeding with manual uninstallation.", YELLOW)
-puts
 
 # Confirm uninstallation
-unless ARGV.include?('--force')
+unless options[:force]
   print "Are you sure you want to uninstall the 6/7 Coding Challenge? (y/n): "
   response = STDIN.gets.strip.downcase
-  unless response == 'y'
-    puts "Uninstallation canceled."
+  unless response == 'y' || response == 'yes'
+    puts colorize("Uninstallation canceled.", BLUE)
     exit 0
   end
 end
 
 # Remove scripts
-puts "Removing scripts..."
+puts colorize("Removing scripts...", BLUE)
 script_count = 0
 Dir.glob(File.join(BIN_DIR, "cc-*.rb")).each do |script|
   if File.exist?(script)
     File.delete(script)
-    puts "  Deleted: #{script}" if ARGV.include?('--verbose')
+    puts "  Deleted: #{script}" if options[:verbose]
     script_count += 1
   end
 end
 puts colorize("#{script_count} scripts removed.", GREEN) if script_count > 0
 
+# Remove lib directory if it exists
+lib_dir = File.join(BIN_DIR, 'lib')
+if Dir.exist?(lib_dir)
+  FileUtils.rm_rf(lib_dir)
+  puts colorize("Removed lib directory: #{lib_dir}", GREEN)
+end
+
 # Remove aliases from .zshrc
-puts "Removing aliases from .zshrc..."
+puts colorize("Removing aliases from .zshrc...", BLUE)
 if File.exist?(ZSHRC_FILE)
   content = File.read(ZSHRC_FILE)
   marker = '# 6/7 Coding Challenge aliases'
@@ -91,10 +112,10 @@ if File.exist?(ZSHRC_FILE)
     File.write(ZSHRC_FILE, new_lines.join("\n"))
     puts colorize("Aliases removed from .zshrc", GREEN)
   else
-    puts "No aliases found in .zshrc."
+    puts colorize("No aliases found in .zshrc.", BLUE)
   end
 else
-  puts "  .zshrc file not found."
+  puts colorize(".zshrc file not found.", BLUE)
 end
 
 # Remove config file
@@ -102,11 +123,11 @@ if File.exist?(CONFIG_FILE)
   File.delete(CONFIG_FILE)
   puts colorize("Configuration file removed.", GREEN)
 else
-  puts "Configuration file not found."
+  puts colorize("Configuration file not found.", BLUE)
 end
 
 # Ask about day counter
-unless ARGV.include?('--force')
+unless options[:force]
   current_day = File.exist?(DAY_COUNTER) ? File.read(DAY_COUNTER).strip : "unknown"
   print "Remove day counter? This will reset your progress (currently on day #{current_day}). (y/n): "
   remove_counter = STDIN.gets.strip.downcase == 'y'
@@ -119,27 +140,26 @@ if remove_counter
     File.delete(DAY_COUNTER)
     puts colorize("Day counter removed. Your progress has been reset.", GREEN)
   else
-    puts "Day counter not found."
+    puts colorize("Day counter not found.", BLUE)
   end
 else
   puts colorize("Day counter preserved.", BLUE)
 end
 
 # Ask about project directory
-unless ARGV.include?('--force')
+unless options[:force]
   print "Remove project directory? This will delete all your code and logs. (y/n): "
   remove_dir = STDIN.gets.strip.downcase == 'y'
 else
-  remove_dir = false # Never force removal of project directory
+  remove_dir = false # Never force remove the project directory
 end
 
 if remove_dir
   if Dir.exist?(BASE_DIR)
-    require 'fileutils'
     FileUtils.rm_rf(BASE_DIR)
     puts colorize("Project directory removed.", GREEN)
   else
-    puts "Project directory not found."
+    puts colorize("Project directory not found.", BLUE)
   end
 else
   puts colorize("Project directory preserved.", BLUE)
@@ -147,4 +167,4 @@ end
 
 puts
 puts colorize("Uninstallation complete!", GREEN)
-puts "To complete the process, please run: source ~/.zshrc"
+puts colorize("To complete the process, please run: source ~/.zshrc", BLUE)

@@ -6,11 +6,10 @@
 # Supports retroactive logging for previous days
 
 require 'fileutils'
+require_relative 'lib/cc_config'
 
-# Constants
-HOME_DIR = ENV['HOME']
-BASE_DIR = File.join(HOME_DIR, 'projects', '6-7-coding-challenge')
-DAY_COUNTER = File.join(HOME_DIR, '.cc-current-day')
+# Load configuration
+CONFIG = CCConfig.load
 
 # ANSI color codes
 RESET = "\e[0m"
@@ -22,8 +21,7 @@ RED = "\e[31m"
 
 # Helper for colorized output
 def colorize(text, color_code)
-  # Check if color should be disabled
-  return text if ENV['NO_COLOR']
+  return text unless CCConfig.use_colors?
   "#{color_code}#{text}#{RESET}"
 end
 
@@ -65,8 +63,7 @@ end
 # Function to get all section names from README
 def get_section_names(content)
   # Find all section headers (## Section Name)
-  sections = content.scan(/^## (.*?)$/m).flatten
-  sections
+  content.scan(/^## (.*?)$/m).flatten
 end
 
 # Process command line arguments
@@ -75,12 +72,7 @@ if ARGV[0] && ARGV[0] =~ /^\d+$/
   puts colorize("Logging for specified day: #{LOG_DAY}", BLUE)
 else
   # If no day specified, use current day counter
-  unless File.exist?(DAY_COUNTER)
-    puts colorize("Error: Day counter file not found. Run setup script first.", RED)
-    exit 1
-  end
-  
-  LOG_DAY = File.read(DAY_COUNTER).strip.to_i
+  LOG_DAY = CCConfig.current_day
   puts colorize("Logging for current day: #{LOG_DAY}", BLUE)
 end
 
@@ -90,15 +82,15 @@ if LOG_DAY < 1
   exit 1
 end
 
-CURRENT_DAY = File.read(DAY_COUNTER).strip.to_i
+CURRENT_DAY = CCConfig.current_day
 if LOG_DAY > CURRENT_DAY
   puts colorize("Error: Cannot log for future days. Current day is #{CURRENT_DAY}.", RED)
   exit 1
 end
 
 # Calculate phase, week based on the day to log
-DAYS_PER_PHASE = 100 # Default value, can be made configurable
-DAYS_PER_WEEK = 6    # Default value, can be made configurable
+DAYS_PER_PHASE = CONFIG["challenge"]["days_per_phase"].to_i
+DAYS_PER_WEEK = CONFIG["challenge"]["days_per_week"].to_i
 
 PHASE = ((LOG_DAY - 1) / DAYS_PER_PHASE) + 1
 WEEK_IN_PHASE = (((LOG_DAY - 1) % DAYS_PER_PHASE) / DAYS_PER_WEEK) + 1
@@ -106,25 +98,9 @@ WEEK_IN_PHASE = (((LOG_DAY - 1) % DAYS_PER_PHASE) / DAYS_PER_WEEK) + 1
 # Format week with leading zero
 WEEK_FORMATTED = format('%02d', WEEK_IN_PHASE)
 
-# Set phase directory
-PHASE_DIRS = {
-  1 => "phase1_ruby",
-  2 => "phase2_python",
-  3 => "phase3_javascript",
-  4 => "phase4_fullstack",
-  5 => "phase5_ml_finance"
-}
-
-PHASE_DIR = PHASE_DIRS[PHASE]
-
-# Check if base directory exists
-unless Dir.exist?(BASE_DIR)
-  puts colorize("Error: Base project directory not found at #{BASE_DIR}", RED)
-  puts "Please run the setup script first."
-  exit 1
-end
-
 # Set paths
+BASE_DIR = CCConfig.base_dir
+PHASE_DIR = CONFIG["challenge"]["phases"][PHASE.to_s]["dir"]
 PROJECT_DIR = File.join(BASE_DIR, PHASE_DIR, "week#{WEEK_FORMATTED}", "day#{LOG_DAY}")
 LOG_FILE = File.join(BASE_DIR, 'logs', "phase#{PHASE}", "week#{WEEK_FORMATTED}.md")
 

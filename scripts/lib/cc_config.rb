@@ -33,8 +33,8 @@ module CCConfig
       "bin_dir" => File.join(ENV['HOME'], 'bin')
     },
     "preferences" => {
-      "editor" => detect_editor(),
-      "use_tmux" => command_exists?('tmux'),
+      "editor" => self.detect_editor(),
+      "use_tmux" => self.command_exists?('tmux'),
       "auto_push" => true,
       "display_colors" => true
     },
@@ -75,13 +75,13 @@ module CCConfig
       begin
         config = JSON.parse(File.read(CONFIG_FILE))
         # Merge with defaults to ensure all keys exist
-        deep_merge(DEFAULT_CONFIG, config)
+        deep_merge(DEFAULT_CONFIG.dup, config)
       rescue JSON::ParserError
         puts "Error: Config file is malformed, using defaults"
-        DEFAULT_CONFIG
+        DEFAULT_CONFIG.dup
       end
     else
-      DEFAULT_CONFIG
+      DEFAULT_CONFIG.dup
     end
   end
   
@@ -90,6 +90,21 @@ module CCConfig
     # Ensure directory exists
     FileUtils.mkdir_p(File.dirname(CONFIG_FILE))
     File.write(CONFIG_FILE, JSON.pretty_generate(config))
+  end
+  
+  # Deep merge two hashes
+  def self.deep_merge(original, overlay)
+    merged = original.dup
+    
+    overlay.each do |key, value|
+      if value.is_a?(Hash) && original[key].is_a?(Hash)
+        merged[key] = deep_merge(original[key], value)
+      else
+        merged[key] = value
+      end
+    end
+    
+    merged
   end
   
   # Update specific config values
@@ -186,3 +201,4 @@ module CCConfig
     config = load
     config["preferences"]["display_colors"]
   end
+end
