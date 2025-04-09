@@ -6,51 +6,45 @@
 
 require 'fileutils'
 require 'date'
+require_relative 'lib/cc_config'
 
-# Constants
-HOME_DIR = ENV['HOME']
-BASE_DIR = File.join(HOME_DIR, 'projects', '6-7-coding-challenge')
-DAY_COUNTER = File.join(HOME_DIR, '.cc-current-day')
+# Load configuration
+CONFIG = CCConfig.load
 
 # Get current day
-unless File.exist?(DAY_COUNTER)
-  puts "Error: Day counter file not found. Creating with default value of 1."
-  File.write(DAY_COUNTER, "1")
-end
-
-CURRENT_DAY = File.read(DAY_COUNTER).strip.to_i
-PHASE = ((CURRENT_DAY - 1) / 100) + 1
-WEEK_IN_PHASE = (((CURRENT_DAY - 1) % 100) / 6) + 1
+CURRENT_DAY = CCConfig.current_day
+PHASE = CCConfig.current_phase
+WEEK_IN_PHASE = CCConfig.week_in_phase
+WEEK_FORMATTED = CCConfig.week_formatted
 DAY_OF_WEEK = Date.today.cwday # 1-7, where 1 is Monday and 7 is Sunday
+
+# ANSI color codes
+RESET = "\e[0m"
+BOLD = "\e[1m"
+GREEN = "\e[32m"
+YELLOW = "\e[33m"
+BLUE = "\e[34m"
+RED = "\e[31m"
+
+# Helper for colorized output
+def colorize(text, color_code)
+  return text unless CCConfig.use_colors?
+  "#{color_code}#{text}#{RESET}"
+end
 
 # Check if it's Sunday
 if DAY_OF_WEEK == 7
-  puts "\e[33m"  # Yellow color
-  puts "=================================================="
-  puts "  Today is the Sabbath. Time for rest, not coding."
-  puts "  The challenge will continue tomorrow."
-  puts "=================================================="
-  puts "\e[0m"   # Reset color
+  puts colorize("Today is the Sabbath. Time for rest, not coding.", YELLOW)
   exit 0
 end
 
-# Format week with leading zero
-WEEK_FORMATTED = format('%02d', WEEK_IN_PHASE)
-
 # Set phase directory
-PHASE_DIRS = {
-  1 => "phase1_ruby",
-  2 => "phase2_python",
-  3 => "phase3_javascript",
-  4 => "phase4_fullstack",
-  5 => "phase5_ml_finance"
-}
-
-PHASE_DIR = PHASE_DIRS[PHASE]
+PHASE_DIR = CCConfig.phase_dir
+BASE_DIR = CCConfig.base_dir
 
 # Check if base directory exists
 unless Dir.exist?(BASE_DIR)
-  puts "Error: Base project directory not found at #{BASE_DIR}"
+  puts colorize("Error: Base project directory not found at #{BASE_DIR}", RED)
   puts "Please run the setup script first."
   exit 1
 end
@@ -66,9 +60,10 @@ FileUtils.mkdir_p(LOG_DIR)
 LOG_FILE = File.join(LOG_DIR, "week#{WEEK_FORMATTED}.md")
 
 unless File.exist?(LOG_FILE)
-  puts "Creating new log file: #{LOG_FILE}"
-  week_start = ((WEEK_IN_PHASE - 1) * 6) + 1
-  week_end = WEEK_IN_PHASE * 6
+  puts colorize("Creating new log file: #{LOG_FILE}", GREEN)
+  days_per_week = CONFIG["challenge"]["days_per_week"].to_i
+  week_start = ((WEEK_IN_PHASE - 1) * days_per_week) + 1
+  week_end = WEEK_IN_PHASE * days_per_week
   
   File.open(LOG_FILE, 'w') do |f|
     f.puts "# Week #{WEEK_FORMATTED} (Days #{week_start}-#{week_end})"
@@ -90,10 +85,13 @@ end
 README_PATH = File.join(PROJECT_DIR, 'README.md')
 
 unless File.exist?(README_PATH)
-  puts "Setting up Day #{CURRENT_DAY} (Phase #{PHASE}, Week #{WEEK_FORMATTED})"
+  puts colorize("Setting up Day #{CURRENT_DAY} (Phase #{PHASE}, Week #{WEEK_FORMATTED})", GREEN)
+  
+  # Get phase name from config
+  phase_name = CONFIG["challenge"]["phases"][PHASE.to_s]["name"]
   
   File.open(README_PATH, 'w') do |f|
-    f.puts "# Day #{CURRENT_DAY} - Phase #{PHASE} (Week #{WEEK_FORMATTED})"
+    f.puts "# Day #{CURRENT_DAY} - Phase #{PHASE}: #{phase_name} (Week #{WEEK_FORMATTED})"
     f.puts ""
     f.puts "## Today's Focus"
     f.puts "- [ ] Primary goal: "
@@ -104,29 +102,55 @@ unless File.exist?(README_PATH)
     f.puts "- Current course: "
     f.puts "- Concept application: "
     f.puts ""
+    f.puts "## Project Context"
+    f.puts "<!-- Describe the larger project this day's work contributes to -->"
+    f.puts ""
+    f.puts "## Tools & Technologies"
+    f.puts "<!-- List the specific technologies, frameworks, and tools used today -->"
+    f.puts "- "
+    f.puts "- "
+    f.puts "- "
+    f.puts ""
     f.puts "## Progress Log"
     f.puts "- Started: #{Time.now.strftime('%Y-%m-%d %H:%M')}"
     f.puts "- "
     f.puts ""
+    f.puts "## Code Highlight"
+    f.puts "```"
+    f.puts "# Include a significant code snippet from today's work"
+    f.puts "# with comments explaining key aspects"
+    f.puts "```"
+    f.puts ""
+    f.puts "## Challenges Faced"
+    f.puts "<!-- Describe technical challenges and how you addressed them -->"
+    f.puts "- "
+    f.puts "- "
+    f.puts ""
+    f.puts "## Learning Resources Used"
+    f.puts "<!-- List books, documentation, tutorials, etc. that you referenced -->"
+    f.puts "- "
+    f.puts "- "
+    f.puts ""
     f.puts "## Reflections"
+    f.puts "<!-- Share insights and lessons learned today -->"
+    f.puts "- "
+    f.puts "- "
+    f.puts ""
+    f.puts "## Tomorrow's Plan"
+    f.puts "<!-- Outline what you plan to work on next -->"
+    f.puts "- "
     f.puts "- "
     f.puts ""
   end
 else
-  puts "Using existing README for Day #{CURRENT_DAY}"
+  puts colorize("Using existing README for Day #{CURRENT_DAY}", BLUE)
 end
 
-# Determine editor
-if system("which nvim > /dev/null 2>&1")
-  EDITOR = "nvim"
-elsif system("which vim > /dev/null 2>&1")
-  EDITOR = "vim"
-else
-  EDITOR = ENV['EDITOR'] || "vi"
-end
+# Get preferred editor from config
+EDITOR = CCConfig.editor
 
-# Check if tmux is installed
-if system("which tmux > /dev/null 2>&1")
+# Use tmux if configured and available
+if CCConfig.use_tmux? && system("which tmux > /dev/null 2>&1")
   # Kill existing session if it exists
   system("tmux has-session -t coding-challenge 2>/dev/null && tmux kill-session -t coding-challenge")
   
@@ -134,10 +158,11 @@ if system("which tmux > /dev/null 2>&1")
   Dir.chdir(PROJECT_DIR)
   
   # Start tmux session
-  puts "Starting tmux session..."
+  puts colorize("Starting tmux session with #{EDITOR}...", GREEN)
   exec "tmux new-session -s coding-challenge '#{EDITOR} README.md'"
 else
-  puts "Warning: tmux is not installed. Opening project directory without tmux."
+  # Just open the editor directly if tmux is not available or not preferred
+  puts colorize("Opening project directory with #{EDITOR}...", GREEN)
   Dir.chdir(PROJECT_DIR)
   exec "#{EDITOR} README.md"
 end
