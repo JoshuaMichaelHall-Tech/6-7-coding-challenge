@@ -138,7 +138,7 @@ end
 
 # Check if day entry already exists
 log_content = File.read(LOG_FILE)
-day_entry_pattern = /^## Day #{LOG_DAY}$/
+day_entry_pattern = /^### Day #{LOG_DAY}$/
 
 if log_content.match(day_entry_pattern)
   puts "Warning: An entry for Day #{LOG_DAY} already exists in the log file."
@@ -156,7 +156,7 @@ if log_content.match(day_entry_pattern)
   
   if start_index
     # Find the end of this entry (next day entry or end of file)
-    end_index = lines[start_index+1..-1].find_index { |line| line.match(/^## Day \d+$/) }
+    end_index = lines[start_index+1..-1].find_index { |line| line.match(/^### Day \d+$/) }
     
     if end_index
       end_index += start_index + 1 # Adjust for the slice from start_index+1
@@ -175,13 +175,13 @@ end
 
 # Find the right spot to insert the new entry (entries should be in chronological order)
 lines = File.readlines(LOG_FILE, chomp: true)
-day_entries = lines.each_with_index.select { |line, _| line.match(/^## Day \d+$/) }
+day_entries = lines.each_with_index.select { |line, _| line.match(/^### Day \d+$/) }
 
 insert_index = nil
 inserted = false
 
 day_entries.each do |entry, index|
-  entry_day = entry.match(/^## Day (\d+)$/)[1].to_i
+  entry_day = entry.match(/^### Day (\d+)$/)[1].to_i
   if LOG_DAY < entry_day
     insert_index = index
     inserted = true
@@ -191,11 +191,11 @@ end
 
 if inserted
   # Insert at the appropriate spot
-  day_entry = "## Day #{LOG_DAY}"
+  day_entry = "### Day #{LOG_DAY}"
   lines.insert(insert_index, day_entry)
 else
   # Append to the end
-  day_entry = "## Day #{LOG_DAY}"
+  day_entry = "### Day #{LOG_DAY}"
   # Find the last daily log entry or the Daily Logs header
   last_entry_index = day_entries.empty? ? 
     lines.find_index { |line| line.match(/^## Daily Logs$/) } : 
@@ -218,9 +218,15 @@ end
 
 # Extract sections from README
 focus_section = extract_section(readme_content, "Today's Focus", "Launch School Connection")
-ls_section = extract_section(readme_content, "Launch School Connection", "Progress Log")
-progress_section = extract_section(readme_content, "Progress Log", "Reflections")
-reflections_section = extract_section(readme_content, "Reflections", nil)
+ls_section = extract_section(readme_content, "Launch School Connection", "Project Context")
+project_context = extract_section(readme_content, "Project Context", "Tools & Technologies")
+tools_section = extract_section(readme_content, "Tools & Technologies", "Progress Log")
+progress_section = extract_section(readme_content, "Progress Log", "Code Highlight")
+code_highlight = extract_section(readme_content, "Code Highlight", "Challenges Faced")
+challenges_section = extract_section(readme_content, "Challenges Faced", "Learning Resources Used")
+resources_section = extract_section(readme_content, "Learning Resources Used", "Reflections")
+reflections_section = extract_section(readme_content, "Reflections", "Tomorrow's Plan")
+tomorrow_plan = extract_section(readme_content, "Tomorrow's Plan", nil)
 
 # Find the index right after the day entry
 day_index = lines.find_index { |line| line == day_entry }
@@ -230,25 +236,81 @@ if day_index
   current_index = day_index + 1
   
   # Add focus section
+  lines.insert(current_index, "#### Today's Focus:")
+  current_index += 1
   focus_lines = focus_section.split("\n")
   lines.insert(current_index, *focus_lines)
   current_index += focus_lines.length
+  lines.insert(current_index, "")
+  current_index += 1
   
   # Add LS section
+  lines.insert(current_index, "#### Launch School Connection:")
+  current_index += 1
   ls_lines = ls_section.split("\n")
   lines.insert(current_index, *ls_lines)
   current_index += ls_lines.length
+  lines.insert(current_index, "")
+  current_index += 1
+  
+  # Add project context if it's not empty
+  unless project_context.strip.empty?
+    lines.insert(current_index, "#### Project Context:")
+    current_index += 1
+    context_lines = project_context.split("\n")
+    # Remove comment lines
+    context_lines = context_lines.reject { |line| line.strip.start_with?('<!--') }
+    lines.insert(current_index, *context_lines)
+    current_index += context_lines.length
+    lines.insert(current_index, "")
+    current_index += 1
+  end
+  
+  # Add tools section if it's not empty
+  unless tools_section.strip.empty?
+    lines.insert(current_index, "#### Tools & Technologies:")
+    current_index += 1
+    tools_lines = tools_section.split("\n")
+    # Remove comment lines
+    tools_lines = tools_lines.reject { |line| line.strip.start_with?('<!--') }
+    lines.insert(current_index, *tools_lines)
+    current_index += tools_lines.length
+    lines.insert(current_index, "")
+    current_index += 1
+  end
   
   # Add progress section
+  lines.insert(current_index, "#### Progress Log:")
+  current_index += 1
   progress_lines = progress_section.split("\n")
   lines.insert(current_index, *progress_lines)
   current_index += progress_lines.length
+  lines.insert(current_index, "")
+  current_index += 1
+  
+  # Add challenges section if it's not empty
+  unless challenges_section.strip.empty?
+    lines.insert(current_index, "#### Challenges Faced:")
+    current_index += 1
+    challenges_lines = challenges_section.split("\n")
+    # Remove comment lines
+    challenges_lines = challenges_lines.reject { |line| line.strip.start_with?('<!--') }
+    lines.insert(current_index, *challenges_lines)
+    current_index += challenges_lines.length
+    lines.insert(current_index, "")
+    current_index += 1
+  end
   
   # Add reflections section
-  lines.insert(current_index, "### Reflections")
+  lines.insert(current_index, "#### Reflections:")
+  current_index += 1
   reflections_lines = reflections_section.split("\n")
-  lines.insert(current_index + 1, *reflections_lines)
-  current_index += reflections_lines.length + 1
+  # Remove comment lines
+  reflections_lines = reflections_lines.reject { |line| line.strip.start_with?('<!--') }
+  lines.insert(current_index, *reflections_lines)
+  current_index += reflections_lines.length
+  lines.insert(current_index, "")
+  current_index += 1
   
   # Add blank line
   lines.insert(current_index, "")

@@ -473,19 +473,38 @@ class CodingChallengeInstaller
     end
   end
 
+  def find_script_path(script_name)
+    # Places to look for scripts
+    possible_paths = [
+      # Current directory
+      File.join(File.dirname(__FILE__), script_name),
+      
+      # scripts/ subdirectory of current directory
+      File.join(File.dirname(__FILE__), 'scripts', script_name),
+      
+      # Parent directory (if run from bin/)
+      File.join(File.dirname(__FILE__), '..', script_name),
+      
+      # scripts/ subdirectory of parent directory
+      File.join(File.dirname(__FILE__), '..', 'scripts', script_name)
+    ]
+    
+    # Return the first path that exists
+    possible_paths.find { |path| File.exist?(path) }
+  end
+
   # Create script files
   def create_script_files
     puts_header "Creating Script Files"
-    
+
     # Define the scripts to create and their source files
     scripts = {
-      'cc-start-day.rb' => 'scripts/cc-start-day.rb',
-      'cc-log-progress.rb' => 'scripts/cc-log-progress.rb',
-      'cc-push-updates.rb' => 'scripts/cc-push-updates.rb',
-      'cc-status.rb' => 'scripts/cc-status.rb',
-      'cc-config.rb' => 'scripts/cc-config.rb',
-      'cc-update.rb' => 'scripts/cc-update.rb',
-      'cc-uninstall.rb' => 'scripts/cc-uninstall.rb'
+      'cc-start-day.rb' => find_script_path('cc-start-day.rb'),
+      'cc-log-progress.rb' => find_script_path('cc-log-progress.rb'),
+      'cc-push-updates.rb' => find_script_path('cc-push-updates.rb'),
+      'cc-status.rb' => find_script_path('cc-status.rb'),
+      'cc-update.rb' => find_script_path('cc-update.rb'),
+      'cc-uninstall.rb' => find_script_path('cc-uninstall.rb')
     }
     
     bin_dir = @config['paths']['bin_dir']
