@@ -31,3 +31,17 @@ desktop.ini
 # Vim
 .*.swp
 .*.swo
+
+# Obsidian configuration directories
+.obsidian/
+**/.obsidian/
+docs/.obsidian/
+*/obsidian/
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-workspace
