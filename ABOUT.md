@@ -30,22 +30,22 @@ This challenge follows several key principles:
 
 ## Five Phase Structure
 
-The challenge is divided into five 100-day phases:
+The challenge is divided into five phases:
 
-### Phase 1: Ruby Backend (Days 1-100)
-Building a strong foundation in server-side programming with Ruby, focusing on fundamentals, data structures, algorithms, and basic web servers with Sinatra.
+### Phase 1: Python Backend (March 31 - June 29, 2025)
+Building a strong foundation in server-side programming with Python, focusing on fundamentals, data structures, algorithms, and web servers while completing Launch School's Python track through course 189 and Algebra 2 coursework.
 
-### Phase 2: Python Data Analysis (Days 101-200)
-Developing data analysis skills with Python, focusing on libraries like Pandas, NumPy, and Matplotlib, with an introduction to machine learning concepts.
+### Phase 2: JavaScript Frontend (June 30 - November 2, 2025)
+Developing frontend skills with JavaScript, HTML, and CSS, including modern frameworks and interactive visualization while advancing mathematical knowledge and building a diverse portfolio of web applications.
 
-### Phase 3: JavaScript Frontend (Days 201-300)
-Building client-side programming skills with JavaScript, HTML, and CSS, including modern frameworks and interactive visualization.
+### Phase 3: Capstone Prep (November 3 - January 4, 2026)
+Preparing for Launch School's Capstone program by focusing on networking, strengthening social media presence, and solidifying technical foundations while applying for the program.
 
-### Phase 4: Full-Stack Projects (Days 301-400)
-Integrating backend and frontend skills to create complete web applications, focusing on CRUD operations, authentication, and deployment.
+### Phase 4: Capstone (January 5 - June 28, 2026)
+Participating in Launch School's Capstone program, working on real-world projects with a team while developing specialized technical expertise and preparing for technical interviews.
 
-### Phase 5: ML Finance Applications (Days 401-500)
-Specializing in machine learning applications for finance, preparing for future career goals in the ML finance sector.
+### Phase 5: Career Development (June 29, 2026 onward)
+Specializing in machine learning applications for finance, preparing for future career goals in the ML finance sector while expanding investments and developing business opportunities.
 
 ## Launch School Integration
 
@@ -55,6 +55,25 @@ This challenge is designed to complement the Launch School curriculum:
 - Weekly planning aligns challenge work with current Launch School material
 - Project structure matches Launch School's emphasis on mastery
 - Challenge phases build toward career goals beyond Launch School
+
+## Daily Structure
+
+The challenge incorporates a structured daily schedule:
+
+- **5:00-5:30** - Devotions
+- **5:30-6:00** - ANKI/Biking/Stretching
+- **6:00-9:00** - Study Session 1 (60 minutes on, 5 minutes off)
+- **10:00-1:00** - Study Session 2 (55 minutes on, 5 minutes off)
+- **2:00-5:00** - Study Session 3 (50 minutes on, 10 minutes off)
+- **5:00-6:30** - Math Lessons (odd days)
+- **Evening** - Daily Kata/Equivalent (Rotating Languages: Ruby/Python, Bash/SQL, HTML/CSS)
+- **9:00** - Bedtime
+
+### Weekly Structure
+- Complete one course module
+- Create mind maps for learned concepts
+- Update 6/7 Challenge progress
+- Review and adjust learning plan
 
 ## Measuring Success
 

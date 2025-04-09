@@ -2,6 +2,21 @@
 
 A personal commitment to code for 500 days, six days a week (Monday through Saturday), while observing the Sabbath rest on Sundays.
 
+## Current Phase
+**Phase 1: Python Backend** (March 31 - June 29, 2025)
+
+Building a strong foundation in server-side programming with Python, focusing on fundamentals, data structures, algorithms, and web servers while completing Launch School's Python track through course 189 and Algebra 2 coursework.
+
+## Daily Schedule
+- **5:00-5:30** - Devotions
+- **5:30-6:00** - ANKI/Biking/Stretching
+- **6:00-9:00** - Study Session 1 (60 minutes on, 5 minutes off)
+- **10:00-1:00** - Study Session 2 (55 minutes on, 5 minutes off)
+- **2:00-5:00** - Study Session 3 (50 minutes on, 10 minutes off)
+- **5:00-6:30** - Math Lessons (odd days)
+- **Evening** - Daily Kata/Equivalent (Rotating Languages: Ruby/Python, Bash/SQL, HTML/CSS)
+- **9:00** - Bedtime
+
 ## 🚀 Quick Start
 
 ```zsh
@@ -33,8 +48,6 @@ This repository is set up as a GitHub template, making it easy to create your ow
 1. **Navigate to the template repository**: Go to [github.com/joshuamichaelhall-tech/6-7-coding-challenge](https://github.com/joshuamichaelhall-tech/6-7-coding-challenge)
 
 2. **Click the "Use this template" button**: Look for the green button near the top of the repository page.
-   
-   ![Use this template button](https://docs.github.com/assets/cb-77734/mw-1440/images/help/repository/use-this-template-button.webp)
 
 3. **Create a new repository**:
    - Enter a name for your repository (e.g., "my-coding-challenge")
@@ -64,59 +77,23 @@ This repository is set up as a GitHub template, making it easy to create your ow
    ccstart
    ```
 
-### What's Included in Your Template Repository
-
-When you create a repository from this template, you'll get:
-
-- The complete directory structure for all phases
-- All automation scripts for daily tracking and logging
-- Comprehensive documentation
-- Initial setup for your first day
-
-You will NOT get:
-- My personal progress or logs
-- CI/CD workflows specific to the original repository
-- Template configuration files
-
-This gives you a clean slate to start your own 6/7 Coding Challenge journey with all the infrastructure already in place!
-
-### Personalizing Your Repository
-
-After creating from the template, be sure to:
-
-1. Update the README.md with your specific goals and plans
-2. Customize the configuration using `ccconfig --interactive`
-3. Set up your GitHub information for proper attribution
-4. Modify phase content to match your learning objectives
-
-## What Is It?
-
-The 6/7 Coding Challenge is a structured approach to mastering software engineering through consistent practice while honoring the Sabbath. It combines:
-
-1. **Daily Coding Practice**: 6 days per week (Monday-Saturday)
-2. **Structured Learning Path**: 5 phases of 100 days each
-3. **Documentation and Reflection**: Tracking progress and learnings
-4. **Sabbath Rest**: Intentional pause every Sunday
-
-The challenge is powered by a set of Ruby automation scripts that help maintain consistency, track progress, and simplify the daily workflow.
-
 ## Five Phase Structure
 
-The challenge is divided into five 100-day phases:
+The challenge is divided into five phases:
 
-### Phase 1: Ruby Backend (Days 1-100)
-Building a strong foundation in server-side programming with Ruby, focusing on fundamentals, data structures, algorithms, and basic web servers with Sinatra.
+### Phase 1: Python Backend (March 31 - June 29, 2025)
+Building a strong foundation in server-side programming with Python, focusing on fundamentals, data structures, algorithms, and web servers.
 
-### Phase 2: Python Data Analysis (Days 101-200)
-Developing data analysis skills with Python, focusing on libraries like Pandas, NumPy, and Matplotlib, with an introduction to machine learning concepts.
+### Phase 2: JavaScript Frontend (June 30 - November 2, 2025)
+Developing frontend skills with JavaScript, HTML, and CSS, including modern frameworks and interactive visualization.
 
-### Phase 3: JavaScript Frontend (Days 201-300)
-Building client-side programming skills with JavaScript, HTML, and CSS, including modern frameworks and interactive visualization.
+### Phase 3: Capstone Prep (November 3 - January 4, 2026)
+Preparing for Launch School's Capstone program, networking, and solidifying technical foundations.
 
-### Phase 4: Full-Stack Projects (Days 301-400)
-Integrating backend and frontend skills to create complete web applications, focusing on CRUD operations, authentication, and deployment.
+### Phase 4: Capstone (January 5 - June 28, 2026)
+Participating in Launch School's Capstone program, working on real-world projects with a team.
 
-### Phase 5: ML Finance Applications (Days 401-500)
+### Phase 5: Career Development (June 29, 2026 onward)
 Specializing in machine learning applications for finance, preparing for future career goals in the ML finance sector.
 
 ## Core Commands
@@ -195,34 +172,6 @@ cclog 5  # Logs day 5 specifically
 
 This is useful if you forget to log on a particular day.
 
-## Installation Options
-
-The Ruby installer script offers multiple modes:
-
-```zsh
-# Standard installation
-ruby ~/bin/cc-installer.rb
-
-# Force reinstallation
-ruby ~/bin/cc-installer.rb --install
-
-# Update an existing installation 
-ruby ~/bin/cc-installer.rb --update
-# or use the alias after installation:
-ccupdate
-
-# Uninstall
-ruby ~/bin/cc-installer.rb --uninstall
-# or use the alias after installation:
-ccuninstall
-
-# Verbose output for troubleshooting
-ruby ~/bin/cc-installer.rb --verbose
-
-# Non-interactive mode (for automated setup)
-ruby ~/bin/cc-installer.rb --non-interactive
-```
-
 ## Project Philosophy
 
 This challenge follows several key principles:
@@ -240,18 +189,8 @@ See these documentation files for more details:
 
 - [About The Challenge](ABOUT.md): Philosophy and motivation
 - [Getting Started Guide](docs/getting-started.md): Detailed setup instructions
-- [Customization Guide](docs/CUSTOMIZATION.md): How to tailor the challenge to your needs
+- [Customization Guide](CUSTOMIZATION.md): How to tailor the challenge to your needs
 - [Scripts Documentation](scripts/README.md): Description of all scripts
-
-## Creating Your Own Challenge
-
-To create your own 6/7 Coding Challenge:
-
-1. Use this repository as a template on GitHub
-2. Clone your new repository
-3. Follow the installation instructions above
-4. Customize the configuration to match your preferences
-5. Start your journey with `ccstart`
 
 ## Acknowledgements
 
@@ -260,7 +199,7 @@ This project was developed with assistance from Anthropic's Claude AI assistant,
 - Code structure suggestions
 - Troubleshooting and debugging assistance
 
-Claude was used as a development aid while all final implementation decisions and code review were performed by the human developer.
+Claude was used as a development aid while all final implementation decisions and code review were performed by Joshua Michael Hall.
 
 ## License
 
