@@ -33,9 +33,15 @@ WEEK_FORMATTED = CCConfig.week_formatted
 
 # Set paths
 BASE_DIR = CCConfig.base_dir
+LOG_DIR = CCConfig.log_dir
 PHASE_DIR = CCConfig.phase_dir
 PROJECT_DIR = File.join(BASE_DIR, PHASE_DIR, "week#{WEEK_FORMATTED}", "day#{CURRENT_DAY}")
 README_PATH = File.join(PROJECT_DIR, 'README.md')
+
+# Function to determine phase and week for a specific day
+def get_phase_and_week_for_day(day)
+  CCConfig.get_phase_and_week_for_day(day)
+end
 
 # Check if project directory and README exist
 unless Dir.exist?(PROJECT_DIR)
@@ -51,102 +57,101 @@ unless File.exist?(README_PATH)
   exit 1
 end
 
-# Check if git repo is initialized
-unless Dir.exist?(File.join(BASE_DIR, '.git'))
-  puts colorize("Git repository not found. Initializing...", YELLOW)
-  Dir.chdir(BASE_DIR) do
-    system("git init")
-    
-    # Create a basic .gitignore if it doesn't exist
-    gitignore_path = File.join(BASE_DIR, '.gitignore')
-    unless File.exist?(gitignore_path)
-      puts colorize("Creating .gitignore file...", BLUE)
-      basic_gitignore = <<~GITIGNORE
-        # System Files
-        .DS_Store
-        .DS_Store?
-        ._*
-        .Spotlight-V100
-        .Trashes
-        ehthumbs.db
-        Thumbs.db
-        desktop.ini
-        .directory
-        *~
-        .*.swp
-        .*.swo
-        
-        # Editor directories and files
-        .idea/
-        .vscode/
-        *.swp
-        *.swo
-        *~
-        *.sublime-workspace
-        
-        # Obsidian configuration directories
-        .obsidian/
-        **/.obsidian/
-        docs/.obsidian/
-        */obsidian/
-      GITIGNORE
-      
-      File.write(gitignore_path, basic_gitignore)
-    end
-    
-    # Check for remote
-    remote_exists = system("git remote -v | grep origin > /dev/null 2>&1")
-    unless remote_exists
-      # Try to get GitHub username from config
-      github_username = CONFIG['user']['github_username']
-      if github_username && !github_username.empty?
-        suggested_remote = "https://github.com/#{github_username}/6-7-coding-challenge.git"
-        puts colorize("No git remote found. You may want to add one with:", BLUE)
-        puts "git remote add origin #{suggested_remote}"
-      else
-        puts colorize("No git remote found. You may want to add one with:", BLUE)
-        puts "git remote add origin <your-repository-url>"
-      end
-    end
-  end
-end
+# Check if using GitHub
+USING_GITHUB = CCConfig.use_github?
 
 # Prompt for commit message
 print "Enter commit message (or press Enter for default): "
-commit_message = STDIN.gets.chomp
+commit_message = $stdin.gets.chomp
 
 if commit_message.empty?
   commit_message = "Complete Day #{CURRENT_DAY} - Phase #{PHASE} Week #{WEEK_FORMATTED}"
 end
 
-# Git operations
-Dir.chdir(BASE_DIR) do
-  puts colorize("Adding changes to git...", BLUE)
-  system("git add .")
-  
-  puts colorize("Committing changes...", BLUE)
-  if system("git commit -m \"#{commit_message}\"")
-    puts colorize("Changes committed successfully.", GREEN)
+# Git operations for main repository
+if USING_GITHUB
+  Dir.chdir(BASE_DIR) do
+    puts colorize("Adding changes to git in #{BASE_DIR}...", BLUE)
+    system("git add .")
     
-    # Check if auto-push is enabled and remote exists
-    if CCConfig.auto_push?
-      remote_exists = system("git remote -v | grep origin > /dev/null 2>&1")
-      if remote_exists
-        puts colorize("Pushing to remote...", BLUE)
-        if system("git push origin HEAD")
-          puts colorize("Changes pushed successfully.", GREEN)
+    puts colorize("Committing changes...", BLUE)
+    if system("git commit -m \"#{commit_message}\"")
+      puts colorize("Changes committed successfully.", GREEN)
+      
+      # Check if auto-push is enabled and remote exists
+      if CCConfig.auto_push?
+        remote_exists = system("git remote -v | grep origin > /dev/null 2>&1")
+        if remote_exists
+          puts colorize("Pushing to remote...", BLUE)
+          if system("git push origin HEAD")
+            puts colorize("Changes pushed successfully.", GREEN)
+          else
+            puts colorize("Warning: Failed to push changes to remote.", YELLOW)
+            puts "You may need to set up your remote or resolve conflicts."
+          end
         else
-          puts colorize("Warning: Failed to push changes to remote.", YELLOW)
-          puts "You may need to set up your remote or resolve conflicts."
+          puts colorize("No remote repository configured for main repo. Skipping push.", BLUE)
+          github_username = CONFIG['user']['github_username']
+          if github_username && !github_username.empty?
+            repo_name = File.basename(BASE_DIR)
+            puts "To add a remote for the main repository, run:"
+            puts "cd #{BASE_DIR}"
+            puts "git remote add origin https://github.com/#{github_username}/#{repo_name}.git"
+          end
         end
       else
-        puts colorize("No remote repository configured. Skipping push.", BLUE)
+        puts colorize("Auto-push is disabled. Skipping push.", BLUE)
       end
     else
-      puts colorize("Auto-push is disabled. Skipping push.", BLUE)
+      puts colorize("No changes to commit or commit failed in main repository.", YELLOW)
     end
-  else
-    puts colorize("No changes to commit or commit failed.", YELLOW)
+  end
+  
+  # Git operations for log repository if different from base directory
+  if LOG_DIR != BASE_DIR
+    Dir.chdir(LOG_DIR) do
+      puts colorize("Adding changes to git in #{LOG_DIR}...", BLUE)
+      system("git add .")
+      
+      puts colorize("Committing changes to log repository...", BLUE)
+      if system("git commit -m \"#{commit_message} (Logs)\"")
+        puts colorize("Log changes committed successfully.", GREEN)
+        
+        # Check if auto-push is enabled and remote exists
+        if CCConfig.auto_push?
+          remote_exists = system("git remote -v | grep origin > /dev/null 2>&1")
+          if remote_exists
+            puts colorize("Pushing logs to remote...", BLUE)
+            if system("git push origin HEAD")
+              puts colorize("Log changes pushed successfully.", GREEN)
+            else
+              puts colorize("Warning: Failed to push log changes to remote.", YELLOW)
+              puts "You may need to set up your remote or resolve conflicts."
+            end
+          else
+            puts colorize("No remote repository configured for logs. Skipping push.", BLUE)
+            
+            github_username = CONFIG['user']['github_username']
+            if github_username && !github_username.empty?
+              # Use correct repository name for logs
+              if CCConfig.is_github_log_repo? && CCConfig.github_log_repo
+                repo_name = CCConfig.github_log_repo
+              else
+                repo_name = File.basename(LOG_DIR)
+              end
+              
+              puts "To add a remote for the logs repository, run:"
+              puts "cd #{LOG_DIR}"
+              puts "git remote add origin https://github.com/#{github_username}/#{repo_name}.git"
+            end
+          end
+        else
+          puts colorize("Auto-push is disabled. Skipping push for logs.", BLUE)
+        end
+      else
+        puts colorize("No changes to commit or commit failed in log repository.", YELLOW)
+      end
+    end
   end
 end
 
@@ -155,26 +160,25 @@ next_day = CURRENT_DAY + 1
 CCConfig.update_day(next_day)
 puts colorize("Day counter incremented to #{next_day}", GREEN)
 
-# Prepare for next day if it's the start of a new week or phase
-next_phase = ((next_day - 1) / CONFIG["challenge"]["days_per_phase"].to_i) + 1
-next_week_in_phase = (((next_day - 1) % CONFIG["challenge"]["days_per_phase"].to_i) / CONFIG["challenge"]["days_per_week"].to_i) + 1
-next_week_formatted = format('%02d', next_week_in_phase)
+# Prepare for next day
+next_day_info = get_phase_and_week_for_day(next_day)
+next_phase = next_day_info[:phase]
+next_week_in_phase = next_day_info[:week_in_phase]
+next_week_formatted = next_day_info[:week_formatted]
+next_phase_dir = next_day_info[:phase_dir]
 
+# Check if next day starts a new week or phase
 if next_week_in_phase > WEEK_IN_PHASE || next_phase > PHASE
   puts colorize("Next day starts a new week or phase.", BLUE)
   
-  # Get the directory for the next phase
-  next_phase_dir = CONFIG["challenge"]["phases"][next_phase.to_s]["dir"]
-  
   # Create directories for the next day
   next_project_dir = File.join(BASE_DIR, next_phase_dir, "week#{next_week_formatted}")
-  
   FileUtils.mkdir_p(next_project_dir)
   puts colorize("Created directory for next week: #{next_project_dir}", GREEN)
   
   # Create log directory for next phase if needed
   if next_phase > PHASE
-    next_log_dir = File.join(BASE_DIR, 'logs', "phase#{next_phase}")
+    next_log_dir = File.join(LOG_DIR, 'logs', "phase#{next_phase}")
     FileUtils.mkdir_p(next_log_dir)
     puts colorize("Created log directory for next phase: #{next_log_dir}", GREEN)
   end

@@ -18,6 +18,9 @@ WEEK_IN_PHASE = CCConfig.week_in_phase
 WEEK_FORMATTED = CCConfig.week_formatted
 DAY_OF_WEEK = Date.today.cwday # 1-7, where 1 is Monday and 7 is Sunday
 
+# Get phase name
+PHASE_NAME = CCConfig.phase_name(PHASE)
+
 # ANSI color codes
 RESET = "\e[0m"
 BOLD = "\e[1m"
@@ -32,15 +35,16 @@ def colorize(text, color_code)
   "#{color_code}#{text}#{RESET}"
 end
 
-# Check if it's Sunday
+# Check if it's a rest day (typically Sunday)
 if DAY_OF_WEEK == 7
   puts colorize("Today is the Sabbath. Time for rest, not coding.", YELLOW)
   exit 0
 end
 
-# Set phase directory
+# Set directories
 PHASE_DIR = CCConfig.phase_dir
 BASE_DIR = CCConfig.base_dir
+LOG_DIR = CCConfig.log_dir
 
 # Check if base directory exists
 unless Dir.exist?(BASE_DIR)
@@ -53,24 +57,34 @@ end
 PROJECT_DIR = File.join(BASE_DIR, PHASE_DIR, "week#{WEEK_FORMATTED}", "day#{CURRENT_DAY}")
 FileUtils.mkdir_p(PROJECT_DIR)
 
-LOG_DIR = File.join(BASE_DIR, 'logs', "phase#{PHASE}")
-FileUtils.mkdir_p(LOG_DIR)
+# Create log directory path
+phase_log_dir = File.join(LOG_DIR, 'logs', "phase#{PHASE}")
+FileUtils.mkdir_p(phase_log_dir)
 
 # Initialize log file if needed
-LOG_FILE = File.join(LOG_DIR, "week#{WEEK_FORMATTED}.md")
+LOG_FILE = File.join(phase_log_dir, "week#{WEEK_FORMATTED}.md")
 
 unless File.exist?(LOG_FILE)
   puts colorize("Creating new log file: #{LOG_FILE}", GREEN)
   days_per_week = CONFIG["challenge"]["days_per_week"].to_i
-  week_start = ((WEEK_IN_PHASE - 1) * days_per_week) + 1
-  week_end = WEEK_IN_PHASE * days_per_week
+  
+  # Calculate start and end days for this week within the phase
+  cumulative_days = 0
+  CONFIG["challenge"]["phases"].each do |num, phase|
+    if num.to_i < PHASE
+      cumulative_days += phase["days"].to_i
+    end
+  end
+  
+  week_start = cumulative_days + ((WEEK_IN_PHASE - 1) * days_per_week) + 1
+  week_end = week_start + days_per_week - 1
   
   File.open(LOG_FILE, 'w') do |f|
     f.puts "# Week #{WEEK_FORMATTED} (Days #{week_start}-#{week_end})"
     f.puts ""
     f.puts "## Week Overview"
     f.puts "- **Focus**: "
-    f.puts "- **Launch School Connection**: "
+    f.puts "- **Challenge Connection**: "
     f.puts "- **Weekly Goals**:"
     f.puts "  - "
     f.puts "  - "
@@ -87,19 +101,16 @@ README_PATH = File.join(PROJECT_DIR, 'README.md')
 unless File.exist?(README_PATH)
   puts colorize("Setting up Day #{CURRENT_DAY} (Phase #{PHASE}, Week #{WEEK_FORMATTED})", GREEN)
   
-  # Get phase name from config
-  phase_name = CONFIG["challenge"]["phases"][PHASE.to_s]["name"]
-  
   File.open(README_PATH, 'w') do |f|
-    f.puts "# Day #{CURRENT_DAY} - Phase #{PHASE}: #{phase_name} (Week #{WEEK_FORMATTED})"
+    f.puts "# Day #{CURRENT_DAY} - Phase #{PHASE}: #{PHASE_NAME} (Week #{WEEK_FORMATTED})"
     f.puts ""
     f.puts "## Today's Focus"
     f.puts "- [ ] Primary goal: "
     f.puts "- [ ] Secondary goal: "
     f.puts "- [ ] Stretch goal: "
     f.puts ""
-    f.puts "## Launch School Connection"
-    f.puts "- Current course: "
+    f.puts "## Challenge Connection"
+    f.puts "- Current project: "
     f.puts "- Concept application: "
     f.puts ""
     f.puts "## Project Context"

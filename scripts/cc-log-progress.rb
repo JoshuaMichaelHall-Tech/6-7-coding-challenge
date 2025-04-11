@@ -66,6 +66,37 @@ def get_section_names(content)
   content.scan(/^## (.*?)$/m).flatten
 end
 
+# Function to determine phase and week for a specific day
+def get_phase_and_week_for_day(day)
+  phases = CONFIG["challenge"]["phases"]
+  days_per_week = CONFIG["challenge"]["days_per_week"].to_i
+  
+  # Calculate phase based on cumulative days
+  cumulative_days = 0
+  phase_num = 1
+  
+  phases.each do |num, phase|
+    days_in_phase = phase["days"].to_i
+    if day <= cumulative_days + days_in_phase
+      phase_num = num.to_i
+      break
+    end
+    cumulative_days += days_in_phase
+  end
+  
+  # Calculate week in phase
+  day_in_phase = day - cumulative_days
+  week_in_phase = ((day_in_phase - 1) / days_per_week) + 1
+  
+  {
+    phase: phase_num,
+    week_in_phase: week_in_phase,
+    week_formatted: format('%02d', week_in_phase),
+    phase_dir: phases[phase_num.to_s]["dir"],
+    phase_name: phases[phase_num.to_s]["name"]
+  }
+end
+
 # Process command line arguments
 if ARGV[0] && ARGV[0] =~ /^\d+$/
   LOG_DAY = ARGV[0].to_i
@@ -88,21 +119,19 @@ if LOG_DAY > CURRENT_DAY
   exit 1
 end
 
-# Calculate phase, week based on the day to log
-DAYS_PER_PHASE = CONFIG["challenge"]["days_per_phase"].to_i
-DAYS_PER_WEEK = CONFIG["challenge"]["days_per_week"].to_i
-
-PHASE = ((LOG_DAY - 1) / DAYS_PER_PHASE) + 1
-WEEK_IN_PHASE = (((LOG_DAY - 1) % DAYS_PER_PHASE) / DAYS_PER_WEEK) + 1
-
-# Format week with leading zero
-WEEK_FORMATTED = format('%02d', WEEK_IN_PHASE)
+# Get phase and week info for the specified day
+day_info = get_phase_and_week_for_day(LOG_DAY)
+PHASE = day_info[:phase]
+WEEK_IN_PHASE = day_info[:week_in_phase]
+WEEK_FORMATTED = day_info[:week_formatted]
+PHASE_DIR = day_info[:phase_dir]
+PHASE_NAME = day_info[:phase_name]
 
 # Set paths
 BASE_DIR = CCConfig.base_dir
-PHASE_DIR = CONFIG["challenge"]["phases"][PHASE.to_s]["dir"]
+LOG_BASE_DIR = CCConfig.log_dir # This may be different if using a separate log repo
 PROJECT_DIR = File.join(BASE_DIR, PHASE_DIR, "week#{WEEK_FORMATTED}", "day#{LOG_DAY}")
-LOG_FILE = File.join(BASE_DIR, 'logs', "phase#{PHASE}", "week#{WEEK_FORMATTED}.md")
+LOG_FILE = File.join(LOG_BASE_DIR, 'logs', "phase#{PHASE}", "week#{WEEK_FORMATTED}.md")
 
 # Check if project directory exists
 unless Dir.exist?(PROJECT_DIR)
@@ -126,18 +155,30 @@ readme_content = File.read(README_PATH)
 log_dir = File.dirname(LOG_FILE)
 FileUtils.mkdir_p(log_dir) unless Dir.exist?(log_dir)
 
+# Calculate days per week for this phase
+DAYS_PER_WEEK = CONFIG["challenge"]["days_per_week"].to_i
+
+# Calculate the start and end days for the week
+cumulative_days = 0
+CONFIG["challenge"]["phases"].each do |num, phase|
+  if num.to_i < PHASE
+    cumulative_days += phase["days"].to_i
+  end
+end
+
+week_start = cumulative_days + ((WEEK_IN_PHASE - 1) * DAYS_PER_WEEK) + 1
+week_end = [week_start + DAYS_PER_WEEK - 1, cumulative_days + CONFIG["challenge"]["phases"][PHASE.to_s]["days"].to_i].min
+
 # Check if log file exists, create if not
 unless File.exist?(LOG_FILE)
   puts colorize("Creating new log file: #{LOG_FILE}", GREEN)
-  week_start = ((WEEK_IN_PHASE - 1) * DAYS_PER_WEEK) + 1
-  week_end = WEEK_IN_PHASE * DAYS_PER_WEEK
   
   File.open(LOG_FILE, 'w') do |f|
     f.puts "# Week #{WEEK_FORMATTED} (Days #{week_start}-#{week_end})"
     f.puts ""
     f.puts "## Week Overview"
     f.puts "- **Focus**: "
-    f.puts "- **Launch School Connection**: "
+    f.puts "- **Challenge Connection**: "
     f.puts "- **Weekly Goals**:"
     f.puts "  - "
     f.puts "  - "
@@ -155,7 +196,7 @@ day_entry_pattern = /^### Day #{LOG_DAY}$/
 if log_content.match(day_entry_pattern)
   puts colorize("Warning: An entry for Day #{LOG_DAY} already exists in the log file.", YELLOW)
   print "Do you want to replace it? (y/n): "
-  replace_entry = STDIN.gets.chomp.downcase
+  replace_entry = $stdin.gets.chomp.downcase
   
   if replace_entry != 'y'
     puts colorize("Operation canceled.", BLUE)
