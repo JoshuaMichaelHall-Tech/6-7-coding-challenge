@@ -6,6 +6,10 @@ require 'json'
 require 'fileutils'
 
 module CCConfig
+  # Constants
+  CONFIG_FILE = File.join(ENV['HOME'], '.cc-config.json')
+  DAY_COUNTER = File.join(ENV['HOME'], '.cc-current-day')
+  
   # Class methods
   class << self
     def load
@@ -25,6 +29,77 @@ module CCConfig
     def save(config)
       FileUtils.mkdir_p(File.dirname(CONFIG_FILE))
       File.write(CONFIG_FILE, JSON.pretty_generate(config))
+    end
+
+    def current_day
+      if File.exist?(DAY_COUNTER)
+        begin
+          day = File.read(DAY_COUNTER).strip.to_i
+          return day if day > 0
+        rescue
+          # Fall through to default
+        end
+      end
+      # Default to day 1
+      1
+    end
+
+    def update_day(day)
+      FileUtils.mkdir_p(File.dirname(DAY_COUNTER))
+      File.write(DAY_COUNTER, day.to_s)
+    end
+
+    def current_phase
+      config = load
+      days_per_phase = config["challenge"]["days_per_phase"].to_i
+      ((current_day - 1) / days_per_phase) + 1
+    end
+
+    def week_in_phase
+      config = load
+      days_per_phase = config["challenge"]["days_per_phase"].to_i
+      days_per_week = config["challenge"]["days_per_week"].to_i
+      (((current_day - 1) % days_per_phase) / days_per_week) + 1
+    end
+
+    def week_formatted
+      format('%02d', week_in_phase)
+    end
+
+    def phase_dir
+      config = load
+      phase = current_phase
+      config["challenge"]["phases"][phase.to_s]["dir"]
+    end
+
+    def base_dir
+      config = load
+      config["paths"]["base_dir"]
+    end
+
+    def bin_dir
+      config = load
+      config["paths"]["bin_dir"]
+    end
+
+    def editor
+      config = load
+      config["preferences"]["editor"]
+    end
+
+    def use_tmux?
+      config = load
+      config["preferences"]["use_tmux"]
+    end
+
+    def auto_push?
+      config = load
+      config["preferences"]["auto_push"]
+    end
+
+    def use_colors?
+      config = load
+      config["preferences"]["display_colors"]
     end
 
     def detect_editor
@@ -51,14 +126,9 @@ module CCConfig
       
       merged
     end
-
-    # Other helper methods...
   end
 
-  # Constants
-  CONFIG_FILE = File.join(ENV['HOME'], '.cc-config.json')
-  DAY_COUNTER = File.join(ENV['HOME'], '.cc-current-day')
-  
+  # Default configuration
   DEFAULT_CONFIG = {
     "version" => "3.0.0",
     "user" => {
@@ -71,8 +141,8 @@ module CCConfig
       "bin_dir" => File.join(ENV['HOME'], 'bin')
     },
     "preferences" => {
-      "editor" => detect_editor(),
-      "use_tmux" => command_exists?('tmux'),
+      "editor" => self.detect_editor,
+      "use_tmux" => self.command_exists?('tmux'),
       "auto_push" => true,
       "display_colors" => true
     },
