@@ -254,8 +254,7 @@ if milestone_count == 0
   puts complete_line
 end
 
-puts colorize("╚" + "═" * (box_width - 2) + "╝", BOLD)
-puts╣", BOLD)
+puts colorize("╠" + "═" * (box_width - 2) + "╣", BOLD)
 
 # Phase info
 phase_text = "#{PHASE}/#{CONFIG["challenge"]["phases"].length} - #{colorize(PHASE_NAMES[PHASE], BLUE)} (Day #{DAYS_IN_PHASE}/#{DAYS_PER_PHASE} in phase)"
@@ -311,4 +310,4 @@ streak_line = "║ 🔥 " + colorize("Streaks:", BOLD) + "   " + streak_text
 streak_line = pad_string(streak_line, box_width - 1) + "║"
 puts streak_line
 
-puts colorize("╠" + "─" * (box_width - 2) + "
+puts colorize("╚" + "═" * (box_width - 2) + "╝", BOLD)
