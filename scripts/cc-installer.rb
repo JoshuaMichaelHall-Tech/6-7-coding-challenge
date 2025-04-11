@@ -29,6 +29,19 @@ class CodingChallengeInstaller
     determine_script_paths
   end
 
+  # Determine the source and destination paths for scripts
+  def determine_script_paths
+    # Find the scripts directory - where this installer is located
+    installer_path = File.expand_path(__FILE__)
+    @scripts_dir = File.dirname(installer_path)
+    
+    # Log paths if verbose
+    if @options[:verbose]
+      puts "Installer path: #{installer_path}"
+      puts "Scripts directory: #{@scripts_dir}"
+    end
+  end
+
   # Load existing configuration if it exists
   def load_existing_config
     if File.exist?(@config_file)
@@ -69,11 +82,11 @@ class CodingChallengeInstaller
       },
       "challenge" => {
         "phases" => {
-          "1" => { "name" => "Ruby Backend", "dir" => "phase1_ruby" },
-          "2" => { "name" => "Python Data Analysis", "dir" => "phase2_python" },
-          "3" => { "name" => "JavaScript Frontend", "dir" => "phase3_javascript" },
-          "4" => { "name" => "Full-Stack Projects", "dir" => "phase4_fullstack" },
-          "5" => { "name" => "ML Finance Applications", "dir" => "phase5_ml_finance" }
+          "1" => { "name" => "Python Backend", "dir" => "phase1_python" },
+          "2" => { "name" => "JavaScript Frontend", "dir" => "phase2_javascript" },
+          "3" => { "name" => "Capstone Prep", "dir" => "phase3_capstone_prep" },
+          "4" => { "name" => "Capstone", "dir" => "phase4_capstone" },
+          "5" => { "name" => "Career Development", "dir" => "phase5_career_development" }
         },
         "days_per_week" => 6,
         "days_per_phase" => 100,
@@ -252,6 +265,34 @@ class CodingChallengeInstaller
       end
     else
       puts "Invalid selection."
+    end
+  end
+
+  # Run the installer
+  def run
+    # First, parse options to potentially override config
+    parse_options
+    
+    # Set up default configuration
+    setup_default_config
+    
+    # Load any existing configuration
+    load_existing_config
+    
+    case @options[:action]
+    when :install
+      install
+    when :update
+      update
+    when :uninstall
+      uninstall
+    when :backup_logs
+      backup_logs
+    when :restore_logs
+      restore_logs
+    else
+      @options[:action] = detect_installation
+      run  # Recurse with detected action
     end
   end
 
@@ -435,34 +476,6 @@ class CodingChallengeInstaller
       else
         original[key] = value
       end
-    end
-  end
-
-  # Run the installer
-  def run
-    # First, parse options to potentially override config
-    parse_options
-    
-    # Set up default configuration
-    setup_default_config
-    
-    # Load any existing configuration
-    load_existing_config
-    
-    case @options[:action]
-    when :install
-      install
-    when :update
-      update
-    when :uninstall
-      uninstall
-    when :backup_logs
-      backup_logs
-    when :restore_logs
-      restore_logs
-    else
-      @options[:action] = detect_installation
-      run  # Recurse with detected action
     end
   end
 end
