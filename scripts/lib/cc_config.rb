@@ -236,7 +236,7 @@ module CCConfig
 
   # Default configuration
   DEFAULT_CONFIG = {
-    "version" => "3.1.0",
+    "version" => "3.1.1",
     "user" => {
       "name" => ENV['USER'] || "User",
       "github_username" => "",

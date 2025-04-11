@@ -1,4 +1,5 @@
 # Using 6/7 Coding Challenge as a Template
+Part of the [6/7 Coding Challenge](https://github.com/JoshuaMichaelHall-Tech/6-7-coding-challenge) documentation. See [Documentation Index](https://github.com/JoshuaMichaelHall-Tech/6-7-coding-challenge/blob/main/DOCUMENTATION.md) for all guides.
 
 This guide explains how to set up and use the 6/7 Coding Challenge repository as a GitHub template for others.
 

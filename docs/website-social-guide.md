@@ -1,7 +1,6 @@
 # 6/7 Coding Challenge
 # Website & Social Media Integration Guide
-
-*This guide is part of the [6/7 Coding Challenge](https://github.com/joshuamichaelhall-tech/6-7-coding-challenge) documentation.*
+Part of the [6/7 Coding Challenge](https://github.com/JoshuaMichaelHall-Tech/6-7-coding-challenge) documentation. See [Documentation Index](https://github.com/JoshuaMichaelHall-Tech/6-7-coding-challenge/blob/main/DOCUMENTATION.md) for all guides.
 
 ## Table of Contents
 1. [Introduction](#introduction)

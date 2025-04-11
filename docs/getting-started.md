@@ -1,4 +1,5 @@
 # Getting Started with the 6/7 Coding Challenge
+Part of the [6/7 Coding Challenge](https://github.com/JoshuaMichaelHall-Tech/6-7-coding-challenge) documentation. See [Documentation Index](https://github.com/JoshuaMichaelHall-Tech/6-7-coding-challenge/blob/main/DOCUMENTATION.md) for all guides.
 
 Welcome to the 6/7 Coding Challenge! This comprehensive guide will help you set up your environment and begin your 500-day journey toward software engineering mastery through consistent practice while honoring the Sabbath.
 
@@ -9,6 +10,7 @@ Welcome to the 6/7 Coding Challenge! This comprehensive guide will help you set 
 - [Core Commands](#core-commands)
 - [Daily Workflow](#daily-workflow)
 - [Understanding the Directory Structure](#understanding-the-directory-structure)
+- [Advanced Logging Features](#advanced-logging-features)
 - [Customization Options](#customization-options)
 - [Troubleshooting](#troubleshooting)
 - [Platform Compatibility](#platform-compatibility)
@@ -108,6 +110,97 @@ These commands will be available after installation:
    - Calculates your progress percentage
    - Estimates your completion date
    - Shows git streak information
+
+## Advanced Logging Features
+
+The 6/7 Coding Challenge includes powerful logging capabilities to ensure you never lose track of your progress, even when your routine is disrupted.
+
+### Retroactive Logging
+
+If you forget to log on a particular day, you can log it retroactively:
+
+```zsh
+# Log the current day (normal usage)
+cclog
+
+# Log a specific previous day
+cclog 5  # Logs day 5 specifically
+```
+
+#### How Retroactive Logging Works
+
+When you use retroactive logging:
+
+1. The system validates that the day number is valid (not future days)
+2. It locates the project directory and README for that specific day
+3. If an entry for that day already exists in the weekly log, it asks for confirmation before replacing it
+4. It extracts content from the README and inserts it at the chronologically correct position in the weekly log
+
+#### Common Use Cases
+
+1. **Missed a day of logging**:
+   ```zsh
+   # You completed day 5, ran ccpush, but forgot to log
+   # Now you're on day 6 and want to log day 5's progress
+   cclog 5
+   ```
+
+2. **Multiple missed days**:
+   ```zsh
+   # Log several missed days in sequence
+   cclog 3
+   cclog 4
+   cclog 5
+   ```
+
+3. **Replacing an incorrect log entry**:
+   ```zsh
+   # Update day 4's log entry with new content from README
+   cclog 4
+   # Script will ask for confirmation before replacing
+   ```
+
+### Log Format Structure
+
+Each week's log file follows a consistent structure:
+
+```markdown
+# Week 01 (Days 1-6)
+
+## Week Overview
+- **Focus**: 
+- **Launch School Connection**: 
+- **Weekly Goals**:
+  - 
+  - 
+  - 
+
+## Daily Logs
+
+### Day 1
+#### Today's Focus:
+[Content from README]
+
+#### Progress Log:
+[Content from README]
+
+#### Reflections:
+[Content from README]
+
+### Day 2
+...
+```
+
+The system automatically extracts sections from your daily README files and formats them appropriately in the weekly log.
+
+### Best Practices for Logging
+
+- **Log daily when possible**: Aim to follow the standard workflow (ccstart → work → cclog → ccpush)
+- **Log in chronological order**: When catching up on multiple days, log them in ascending order
+- **Verify your logs**: After retroactive logging, review the weekly log file to ensure entries are correctly ordered
+- **Backup regularly**: Use `ccbackup` to safeguard your logs, especially before making significant changes
+
+This enhancement helps ensure that your 6/7 Coding Challenge journey is fully documented even when life gets in the way of your regular routine.
 
 ## Understanding the Directory Structure
 
