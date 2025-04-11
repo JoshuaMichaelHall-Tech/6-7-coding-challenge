@@ -51,15 +51,36 @@ module CCConfig
 
     def current_phase
       config = load
-      days_per_phase = config["challenge"]["days_per_phase"].to_i
-      ((current_day - 1) / days_per_phase) + 1
+      day = current_day
+      phases = config["challenge"]["phases"]
+      
+      # Calculate current phase based on cumulative days
+      current_day_count = 0
+      phases.each do |phase_num, phase_info|
+        current_day_count += phase_info["days"].to_i
+        return phase_num.to_i if day <= current_day_count
+      end
+      
+      # Default to the last phase if beyond all phases
+      phases.keys.map(&:to_i).max || 1
     end
 
     def week_in_phase
       config = load
-      days_per_phase = config["challenge"]["days_per_phase"].to_i
+      day = current_day
       days_per_week = config["challenge"]["days_per_week"].to_i
-      (((current_day - 1) % days_per_phase) / days_per_week) + 1
+      phases = config["challenge"]["phases"]
+      
+      # Calculate days in current phase
+      day_in_phase = day
+      phases.each do |phase_num, phase_info|
+        if phase_num.to_i < current_phase
+          day_in_phase -= phase_info["days"].to_i
+        end
+      end
+      
+      # Calculate week in phase
+      ((day_in_phase - 1) / days_per_week) + 1
     end
 
     def week_formatted
@@ -81,6 +102,11 @@ module CCConfig
       config = load
       config["paths"]["bin_dir"]
     end
+    
+    def log_dir
+      config = load
+      config["paths"]["log_dir"]
+    end
 
     def editor
       config = load
@@ -100,6 +126,86 @@ module CCConfig
     def use_colors?
       config = load
       config["preferences"]["display_colors"]
+    end
+    
+    def use_github?
+      config = load
+      config["user"]["use_github"]
+    end
+    
+    def is_github_log_repo?
+      config = load
+      config["paths"]["log_repo_type"] == "github"
+    end
+    
+    def github_log_repo
+      config = load
+      if config["paths"]["log_repo_type"] == "github"
+        return config["paths"]["log_repo"]
+      end
+      return nil
+    end
+
+    def phase_days(phase_num)
+      config = load
+      phase = config["challenge"]["phases"][phase_num.to_s]
+      phase ? phase["days"].to_i : 0
+    end
+    
+    def total_days
+      config = load
+      config["challenge"]["total_days"].to_i
+    end
+    
+    def days_per_week
+      config = load
+      config["challenge"]["days_per_week"].to_i
+    end
+    
+    def phase_count
+      config = load
+      config["challenge"]["phases"].size
+    end
+    
+    def phase_name(phase_num)
+      config = load
+      phase = config["challenge"]["phases"][phase_num.to_s]
+      phase ? phase["name"] : "Unknown Phase"
+    end
+    
+    def get_phase_and_week_for_day(day)
+      config = load
+      phases = config["challenge"]["phases"]
+      days_per_week = config["challenge"]["days_per_week"].to_i
+      
+      # Calculate phase based on cumulative days
+      cumulative_days = 0
+      phase_num = 1
+      
+      phases.each do |num, phase|
+        days_in_phase = phase["days"].to_i
+        if day <= cumulative_days + days_in_phase
+          phase_num = num.to_i
+          break
+        end
+        cumulative_days += days_in_phase
+      end
+      
+      # Calculate days in phase
+      day_in_phase = day - cumulative_days
+      
+      # Calculate week in phase
+      week_in_phase = ((day_in_phase - 1) / days_per_week) + 1
+      
+      {
+        phase: phase_num,
+        week_in_phase: week_in_phase,
+        week_formatted: format('%02d', week_in_phase),
+        phase_dir: phases[phase_num.to_s]["dir"],
+        phase_name: phases[phase_num.to_s]["name"],
+        days_in_phase: day_in_phase,
+        cumulative_days: cumulative_days
+      }
     end
 
     def detect_editor
@@ -130,20 +236,24 @@ module CCConfig
 
   # Default configuration
   DEFAULT_CONFIG = {
-    "version" => "3.0.0",
+    "version" => "3.1.0",
     "user" => {
       "name" => ENV['USER'] || "User",
       "github_username" => "",
-      "github_email" => ""
+      "github_email" => "",
+      "use_github" => false
     },
     "paths" => {
       "base_dir" => File.join(ENV['HOME'], 'projects', '6-7-coding-challenge'),
-      "bin_dir" => File.join(ENV['HOME'], 'bin')
+      "bin_dir" => File.join(ENV['HOME'], 'bin'),
+      "log_repo" => "",
+      "log_repo_type" => "local",
+      "log_dir" => ""
     },
     "preferences" => {
       "editor" => self.detect_editor,
       "use_tmux" => self.command_exists?('tmux'),
-      "auto_push" => true,
+      "auto_push" => false,
       "display_colors" => true
     },
     "installation" => {
@@ -152,14 +262,9 @@ module CCConfig
     },
     "challenge" => {
       "phases" => {
-        "1" => { "name" => "Ruby Backend", "dir" => "phase1_ruby" },
-        "2" => { "name" => "Python Data Analysis", "dir" => "phase2_python" },
-        "3" => { "name" => "JavaScript Frontend", "dir" => "phase3_javascript" },
-        "4" => { "name" => "Full-Stack Projects", "dir" => "phase4_fullstack" },
-        "5" => { "name" => "ML Finance Applications", "dir" => "phase5_ml_finance" }
+        "1" => { "name" => "500 Day Coding Challenge", "dir" => "phase1", "days" => 500 }
       },
       "days_per_week" => 6,
-      "days_per_phase" => 100,
       "total_days" => 500
     }
   }.freeze

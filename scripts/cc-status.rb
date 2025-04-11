@@ -12,16 +12,35 @@ CONFIG = CCConfig.load
 
 # Get current day info
 CURRENT_DAY = CCConfig.current_day
-TOTAL_DAYS = CONFIG["challenge"]["total_days"].to_i
+TOTAL_DAYS = CCConfig.total_days
 DAYS_COMPLETED = CURRENT_DAY - 1
 DAYS_REMAINING = TOTAL_DAYS - DAYS_COMPLETED
 PERCENT_COMPLETE = (DAYS_COMPLETED.to_f / TOTAL_DAYS * 100).round(1)
 
 # Get phase info
-DAYS_PER_PHASE = CONFIG["challenge"]["days_per_phase"].to_i
 PHASE = CCConfig.current_phase
-DAYS_IN_PHASE = CURRENT_DAY - ((PHASE - 1) * DAYS_PER_PHASE)
-DAYS_REMAINING_IN_PHASE = [DAYS_PER_PHASE - DAYS_IN_PHASE + 1, 0].max
+PHASE_NAME = CCConfig.phase_name(PHASE)
+
+# Calculate days in current phase and days remaining in current phase
+DAYS_IN_PHASE = 0
+DAYS_REMAINING_IN_PHASE = 0
+
+# Calculate cumulative days to determine phase boundaries
+cumulative_days = 0
+phase_days = 0
+
+CONFIG["challenge"]["phases"].each do |num, phase|
+  phase_num = num.to_i
+  days = phase["days"].to_i
+  
+  if phase_num < PHASE
+    cumulative_days += days
+  elsif phase_num == PHASE
+    phase_days = days
+    DAYS_IN_PHASE = CURRENT_DAY - cumulative_days
+    DAYS_REMAINING_IN_PHASE = days - DAYS_IN_PHASE + 1
+  end
+end
 
 # Get week info
 DAYS_PER_WEEK = CONFIG["challenge"]["days_per_week"].to_i
@@ -68,14 +87,9 @@ def pad_string(str, target_length, pad_char = ' ', align = :right)
   end
 end
 
-# Get phase names from config
-PHASE_NAMES = {}
-CONFIG["challenge"]["phases"].each do |phase_num, phase_info|
-  PHASE_NAMES[phase_num.to_i] = phase_info["name"]
-end
-
 # Calculate dates
 BASE_DIR = CCConfig.base_dir
+LOG_DIR = CCConfig.log_dir
 TODAY = Date.today
 START_DATE = nil
 
@@ -87,7 +101,7 @@ START_DATE ||= TODAY - DAYS_COMPLETED
 ELAPSED_DAYS = (TODAY - START_DATE).to_i
 ELAPSED_WEEKS = [ELAPSED_DAYS / 7, 1].max  # Avoid division by zero
 
-# Calculate expected day based on 6 days/week schedule
+# Calculate expected day based on days/week schedule
 EXPECTED_DAY = (ELAPSED_WEEKS * DAYS_PER_WEEK) + [ELAPSED_DAYS % 7, DAYS_PER_WEEK].min
 
 # Determine if ahead or behind schedule
@@ -121,9 +135,10 @@ git_status = "Unknown"
 current_streak = 0
 longest_streak = 0
 last_commit_date = nil
+repo_path = CCConfig.use_github? ? BASE_DIR : nil
 
-if Dir.exist?(File.join(BASE_DIR, '.git'))
-  Dir.chdir(BASE_DIR) do
+if repo_path && Dir.exist?(File.join(repo_path, '.git'))
+  Dir.chdir(repo_path) do
     # Get last commit date
     last_commit = `git log -1 --format=%cd --date=short 2>/dev/null`.strip
     last_commit_date = Date.parse(last_commit) rescue nil
@@ -173,15 +188,40 @@ if Dir.exist?(File.join(BASE_DIR, '.git'))
       git_status = colorize("Clean", GREEN)
     end
   end
+else
+  git_status = colorize("Git not enabled", BLUE)
+end
+
+# Generate list of phase milestones
+def generate_phase_milestones
+  milestones = []
+  cumulative_days = 0
+  
+  CONFIG["challenge"]["phases"].each do |num, phase|
+    phase_num = num.to_i
+    days = phase["days"].to_i
+    cumulative_days += days
+    
+    if CURRENT_DAY <= cumulative_days
+      milestone = {
+        day: cumulative_days,
+        name: "Phase #{phase_num} Complete: #{phase['name']}",
+        days_to_go: cumulative_days - CURRENT_DAY + 1
+      }
+      milestones << milestone
+    end
+  end
+  
+  milestones
 end
 
 # Print status report
 puts
-box_width = 70
+box_width = 72
 puts colorize("╔" + "═" * (box_width - 2) + "╗", BOLD)
 
 # Center title with proper padding
-title = "6/7 Coding Challenge Status"
+title = "Coding Challenge Status"
 title_padding = (box_width - visible_length(title) - 2) / 2
 title_line = "║" + " " * title_padding + colorize(title, BOLD)
 title_line = pad_string(title_line, box_width - 1) + "║"
@@ -206,45 +246,24 @@ milestone_header = "║ 🏆 " + colorize("Next milestones:", BOLD)
 milestone_header = pad_string(milestone_header, box_width - 1) + "║"
 puts milestone_header
 
+# Get phase milestones
+phase_milestones = generate_phase_milestones
 milestone_count = 0
-phase_count = CONFIG["challenge"]["phases"].length
 
-# Generate milestone days for phases
-phase_milestones = []
-(1..phase_count).each do |phase_num|
-  milestone_day = phase_num * DAYS_PER_PHASE
-  if milestone_day <= TOTAL_DAYS && CURRENT_DAY <= milestone_day
-    phase_milestones << milestone_day
-  end
-end
-
-# Add final milestone if not already included
-unless phase_milestones.include?(TOTAL_DAYS)
-  phase_milestones << TOTAL_DAYS
-end
-
-# Display milestones
 phase_milestones.each do |milestone|
-  if CURRENT_DAY <= milestone
-    days_to_milestone = milestone - CURRENT_DAY + 1
-    weeks = days_to_milestone / DAYS_PER_WEEK
-    extra_days = days_to_milestone % DAYS_PER_WEEK
-    target_date = TODAY + (weeks * 7) + extra_days
-    
-    milestone_phase = milestone / DAYS_PER_PHASE
-    
-    if milestone == TOTAL_DAYS
-      milestone_name = "Challenge Complete"
-    else
-      milestone_name = "Phase #{milestone_phase} Complete"
-    end
-    
-    milestone_text = "Day #{milestone} (#{milestone_name}): #{days_to_milestone} days (#{target_date.strftime('%Y-%m-%d')})"
-    milestone_line = "║   " + milestone_text
-    milestone_line = pad_string(milestone_line, box_width - 1) + "║"
-    puts milestone_line
-    milestone_count += 1
-  end
+  days_to_milestone = milestone[:days_to_go]
+  weeks = days_to_milestone / DAYS_PER_WEEK
+  extra_days = days_to_milestone % DAYS_PER_WEEK
+  target_date = TODAY + (weeks * 7) + extra_days
+  
+  milestone_text = "Day #{milestone[:day]} (#{milestone[:name]}): #{days_to_milestone} days (#{target_date.strftime('%Y-%m-%d')})"
+  milestone_line = "║   " + milestone_text
+  milestone_line = pad_string(milestone_line, box_width - 1) + "║"
+  puts milestone_line
+  milestone_count += 1
+  
+  # Limit to showing 3 milestones to avoid cluttering the display
+  break if milestone_count >= 3
 end
 
 # If no milestones left
@@ -257,7 +276,7 @@ end
 puts colorize("╠" + "═" * (box_width - 2) + "╣", BOLD)
 
 # Phase info
-phase_text = "#{PHASE}/#{CONFIG["challenge"]["phases"].length} - #{colorize(PHASE_NAMES[PHASE], BLUE)} (Day #{DAYS_IN_PHASE}/#{DAYS_PER_PHASE} in phase)"
+phase_text = "#{PHASE}/#{CONFIG["challenge"]["phases"].length} - #{colorize(PHASE_NAME, BLUE)} (Day #{DAYS_IN_PHASE}/#{phase_days} in phase)"
 phase_line = "║ 🔷 " + colorize("Phase:", BOLD) + " " + phase_text
 phase_line = pad_string(phase_line, box_width - 1) + "║"
 puts phase_line
@@ -289,25 +308,28 @@ completion_line = "║ 🏁 " + colorize("Est. finish:", BOLD) + " " + completio
 completion_line = pad_string(completion_line, box_width - 1) + "║"
 puts completion_line
 
-puts colorize("╠" + "─" * (box_width - 2) + "╣", BOLD)
-
-# Repository info
-repo_line = "║ 📂 " + colorize("Repo status:", BOLD) + " " + git_status
-repo_line = pad_string(repo_line, box_width - 1) + "║"
-puts repo_line
-
-if last_commit_date
-  days_since_commit = (TODAY - last_commit_date).to_i
-  commit_status = days_since_commit == 0 ? "Today" : "#{days_since_commit} days ago"
-  commit_text = "#{last_commit_date.strftime('%Y-%m-%d')} (#{commit_status})"
-  commit_line = "║ 📝 " + colorize("Last commit:", BOLD) + " " + commit_text
-  commit_line = pad_string(commit_line, box_width - 1) + "║"
-  puts commit_line
+# Show repository info only if using GitHub
+if CCConfig.use_github?
+  puts colorize("╠" + "─" * (box_width - 2) + "╣", BOLD)
+  
+  # Repository info
+  repo_line = "║ 📂 " + colorize("Repo status:", BOLD) + " " + git_status
+  repo_line = pad_string(repo_line, box_width - 1) + "║"
+  puts repo_line
+  
+  if last_commit_date
+    days_since_commit = (TODAY - last_commit_date).to_i
+    commit_status = days_since_commit == 0 ? "Today" : "#{days_since_commit} days ago"
+    commit_text = "#{last_commit_date.strftime('%Y-%m-%d')} (#{commit_status})"
+    commit_line = "║ 📝 " + colorize("Last commit:", BOLD) + " " + commit_text
+    commit_line = pad_string(commit_line, box_width - 1) + "║"
+    puts commit_line
+  end
+  
+  streak_text = "Current: #{current_streak} days, Longest: #{longest_streak} days"
+  streak_line = "║ 🔥 " + colorize("Streaks:", BOLD) + "   " + streak_text
+  streak_line = pad_string(streak_line, box_width - 1) + "║"
+  puts streak_line
 end
-
-streak_text = "Current: #{current_streak} days, Longest: #{longest_streak} days"
-streak_line = "║ 🔥 " + colorize("Streaks:", BOLD) + "   " + streak_text
-streak_line = pad_string(streak_line, box_width - 1) + "║"
-puts streak_line
 
 puts colorize("╚" + "═" * (box_width - 2) + "╝", BOLD)
