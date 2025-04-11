@@ -1,4 +1,5 @@
 # Sample 6/7 Coding Challenge Configurations
+Part of the [6/7 Coding Challenge](https://github.com/JoshuaMichaelHall-Tech/6-7-coding-challenge) documentation. See [Documentation Index](https://github.com/JoshuaMichaelHall-Tech/6-7-coding-challenge/blob/main/DOCUMENTATION.md) for all guides.
 
 This document provides example configurations for different use cases of the 6/7 Coding Challenge. Use these as starting points for your own customized challenge.
 

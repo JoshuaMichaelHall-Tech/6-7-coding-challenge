@@ -7,15 +7,13 @@ A personal commitment to code for 500 days, six days a week (Monday through Satu
 The 6/7 Coding Challenge is a structured approach to mastering software engineering through consistent practice while respecting the importance of regular rest. The "6/7" represents coding for six days each week while resting on the seventh (Sabbath).
 
 ## Current Phase
-**Phase 1: Python Backend** (March 31 - June 29, 2025)
-
-Building a strong foundation in server-side programming with Python, focusing on fundamentals, data structures, algorithms, and web servers while completing Launch School's Python track through course 189 and Algebra 2 coursework.
+You're currently in: **Phase 1: Day 1**
 
 ## 🚀 Quick Start
 
 ```zsh
 # Clone the repository
-git clone https://github.com/joshuamichaelhall-tech/6-7-coding-challenge.git
+git clone https://github.com/yourusername/6-7-coding-challenge.git
 cd 6-7-coding-challenge
 
 # Install the Ruby-based setup script
@@ -45,7 +43,70 @@ After installation, these commands will be available:
 | `ccstatus` | Show your overall challenge progress                  |
 | `ccconfig` | View or modify your configuration                     |
 | `ccupdate` | Update scripts to the latest version                  |
+| `ccbackup` | Backup logs and configuration                         |
+| `ccrestore`| Restore logs from a backup                           |
 | `ccuninstall` | Remove scripts and configuration                   |
+
+## Key Features
+
+The 6/7 Coding Challenge includes several powerful features to enhance your learning journey:
+
+### Backup and Restore System
+
+Maintain your progress across different computers or through system changes:
+
+- **Local Backup**: Save logs to a timestamped directory in your home folder
+- **Git Repository**: Create special branches for logs in your repository
+- **Custom Location**: Specify any directory for your backup
+- **Simple Restore**: Easily restore from any backup source with `ccrestore`
+
+```zsh
+# Create a backup of your logs
+ccbackup
+
+# Restore from a previous backup
+ccrestore
+```
+
+### Flexible Phase Management
+
+Adapt your challenge structure without losing past progress:
+
+- **Interactive Configuration**: Update phases with guided prompts
+- **Customizable Structure**: Modify phase names, directories, and durations
+- **Safe Updates**: Change your challenge structure without losing logs
+
+```zsh
+# Update configuration interactively
+ccconfig --interactive
+
+# Update specific phase information
+ccconfig --set "challenge.phases.1.name=New Phase Name"
+```
+
+### Retroactive Logging
+
+Never lose track of your progress, even if you forget to log:
+
+- **Log Previous Days**: Add entries for days you've completed but forgotten to log
+- **Chronological Ordering**: Automatically places entries in the correct sequence
+- **Duplicate Handling**: Smart replacement of existing entries
+
+```zsh
+# Log the current day (standard usage)
+cclog
+
+# Log a specific previous day
+cclog 5  # Logs day 5 retroactively
+```
+
+### Project Templates
+
+Start each day with well-structured project templates:
+
+- **Phase-Specific Templates**: Tailored for different technologies
+- **Consistent Structure**: Maintain a uniform approach across your challenge
+- **Customizable**: Adapt templates to your specific needs
 
 ## Daily Workflow
 
@@ -55,33 +116,53 @@ After installation, these commands will be available:
 4. **Log progress**: Run `cclog` to update your weekly log
 5. **Commit**: Run `ccpush` to commit changes and increment day counter
 
-## Five Phase Structure
+## Challenge Structure Examples
 
-The challenge is divided into five phases:
+The challenge is highly customizable. Here are some examples of how you might structure it:
 
-### Phase 1: Python Backend (March 31 - June 29, 2025)
-Building a strong foundation in server-side programming with Python, focusing on fundamentals, data structures, algorithms, and web servers.
+### Default Structure (Single Phase)
+A simple 500-day coding journey:
+- **Phase 1: Coding Challenge** - 500 days of consistent practice
 
-### Phase 2: JavaScript Frontend (June 30 - November 2, 2025)
-Developing frontend skills with JavaScript, HTML, and CSS, including modern frameworks and interactive visualization.
+### Five-Phase Example (Technology Learning Path)
+A comprehensive programming language journey:
 
-### Phase 3: Capstone Prep (November 3 - January 4, 2026)
-Preparing for Launch School's Capstone program, networking, and solidifying technical foundations.
+1. **Phase 1: Backend Fundamentals** (100 days)
+   - Building server-side applications and mastering core language concepts
+   
+2. **Phase 2: Data Science & Analysis** (100 days)
+   - Working with data processing, visualization, and analysis tools
+   
+3. **Phase 3: Frontend Development** (100 days)
+   - Creating responsive user interfaces and interactive experiences
+   
+4. **Phase 4: Full-Stack Projects** (100 days)
+   - Integrating backend and frontend in complete applications
+   
+5. **Phase 5: Specialization** (100 days)
+   - Focusing on a specific area like ML, mobile development, or cloud
 
-### Phase 4: Capstone (January 5 - June 28, 2026)
-Participating in Launch School's Capstone program, working on real-world projects with a team.
+### Three-Phase Example (Project-Based)
+A focused project creation journey:
 
-### Phase 5: Career Development (June 29, 2026 onward)
-Specializing in machine learning applications for finance, preparing for future career goals in the ML finance sector.
+1. **Phase 1: Learning Fundamentals** (100 days)
+   - Mastering core technologies and concepts
+   
+2. **Phase 2: Building Projects** (200 days)
+   - Creating 10 complete projects of increasing complexity
+   
+3. **Phase 3: Advanced Specialization** (200 days)
+   - Focusing on large-scale applications in your desired specialty
 
 ## Documentation
 
 For more detailed information, check out these guides:
 
 - [Getting Started](docs/getting-started.md): Complete setup instructions
-- [About the Challenge](docs/about.md): Philosophy and motivation
-- [Customization Guide](docs/customization.md): How to tailor the challenge to your needs
+- [About the Challenge](docs/ABOUT.md): Philosophy and motivation
+- [Customization Guide](docs/CUSTOMIZATION.md): How to tailor the challenge to your needs
 - [Project Templates](docs/project-templates.md): Templates for each phase
+- [Documentation Index](DOCUMENTATION.md): All available documentation
 
 ## Project Philosophy
 
@@ -101,7 +182,7 @@ This project was developed with assistance from Anthropic's Claude AI assistant,
 - Code structure suggestions
 - Troubleshooting and debugging assistance
 
-Claude was used as a development aid while all final implementation decisions and code review were performed by Joshua Michael Hall.
+Claude was used as a development aid while all final implementation decisions and code review were performed by the original creator.
 
 ## License
 

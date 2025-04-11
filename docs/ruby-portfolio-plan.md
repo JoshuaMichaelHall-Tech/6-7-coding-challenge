@@ -1,5 +1,6 @@
 # Ruby Portfolio Project Plan
 ## 6/7 Coding Challenge - Phase 1 (200 Hours)
+Part of the [6/7 Coding Challenge](https://github.com/JoshuaMichaelHall-Tech/6-7-coding-challenge) documentation. See [Documentation Index](https://github.com/JoshuaMichaelHall-Tech/6-7-coding-challenge/blob/main/DOCUMENTATION.md) for all guides.
 
 This document outlines three significant Ruby projects of increasing complexity to build during Phase 1 of my 6/7 Coding Challenge. Each project is designed to showcase different aspects of my Ruby mastery while building toward my career goals in ML finance.
 
