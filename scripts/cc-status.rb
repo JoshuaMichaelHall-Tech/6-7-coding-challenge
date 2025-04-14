@@ -67,7 +67,16 @@ end
 # Function to ensure string length considering ANSI codes
 def visible_length(str)
   # Remove ANSI color codes for length calculation
-  str.gsub(/\e\[[0-9;]*m/, '').length
+  cleaned_str = str.gsub(/\e\[[0-9;]*m/, '')
+  
+  # Count emojis (this is a simple approach that looks for common emoji characters)
+  emoji_count = cleaned_str.scan(/[📊🏆🔷📅📆⏱🚀🏁📂📝🔥]/).count
+
+  # Count clock emoji
+  clock = cleaned_str.scan(/[⏱️]/).count / 2 || 0
+  
+  # Return length minus emoji count
+  cleaned_str.length + emoji_count - clock
 end
 
 # Function to pad string to specific length considering ANSI codes
@@ -217,7 +226,7 @@ end
 
 # Print status report
 puts
-box_width = 72
+box_width = 82
 puts colorize("╔" + "═" * (box_width - 2) + "╗", BOLD)
 
 # Center title with proper padding
@@ -294,7 +303,7 @@ puts day_line
 puts colorize("╠" + "─" * (box_width - 2) + "╣", BOLD)
 
 # Schedule info
-schedule_line = "║ ⏱️  " + colorize("Schedule:", BOLD) + " " + schedule_status
+schedule_line = "║ ⏱️ " + colorize("Schedule:", BOLD) + " " + schedule_status
 schedule_line = pad_string(schedule_line, box_width - 1) + "║"
 puts schedule_line
 
