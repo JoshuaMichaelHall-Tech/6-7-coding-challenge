@@ -1,3 +1,6 @@
+## This Ruby CLI tool was built during my software engineering studies.
+I now focus on DevOps/Infrastructure automation - see my AWS/Terraform projects.
+
 # 6/7 Coding Challenge
 
 A personal commitment to code for 500 days, six days a week (Monday through Saturday), while observing the Sabbath rest on Sundays.
